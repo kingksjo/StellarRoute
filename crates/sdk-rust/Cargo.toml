@@ -1,0 +1,24 @@
+[package]
+name = "stellarroute-sdk"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[dependencies]
+# Workspace dependencies
+tokio.workspace = true
+async-trait.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+anyhow.workspace = true
+thiserror.workspace = true
+reqwest.workspace = true
+chrono.workspace = true
+uuid.workspace = true
+
+# Add SDK-specific dependencies here
+
+[dev-dependencies]
+tokio-test = "0.4"

@@ -1,0 +1,20 @@
+[package]
+name = "stellarroute-routing"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+
+[dependencies]
+# Workspace dependencies
+serde.workspace = true
+serde_json.workspace = true
+anyhow.workspace = true
+thiserror.workspace = true
+tracing.workspace = true
+
+# Add routing-specific dependencies here
+
+[dev-dependencies]
+tokio-test = "0.4"
