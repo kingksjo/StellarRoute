@@ -45,7 +45,6 @@ coverage/
 
 # Local development
 .local/
-roadmap.md
 requirements.md
 task_plan.md
 findings.md
@@ -56,3 +55,5 @@ progress.md
 .claude/skills/planning-with-files/scripts/
 .claude/skills/planning-with-files/scripts/init-session.sh
 .claude/skills/planning-with-files/scripts/init-session.sh
+
+GITHUB_ISSUES.md
