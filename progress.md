@@ -329,6 +329,19 @@ Fix CI/CD pipeline errors: doc comment parse error, unused parameter warning, an
 - ✅ Code compiles without parse errors
 - ✅ No unused variable warnings
 
+#### Additional Fixes (2026-01-20)
+
+**Fix 1: Empty line after doc comment**
+- **Issue:** Clippy error `empty line after doc comment` in `crates/sdk-rust/src/client.rs`
+- **Error:** Outer doc comments (`///`) followed by empty line before struct
+- **Fix:** Converted to inner doc comments (`//!`) since documenting the module
+- **Verification:** ✅ `cargo clippy -p stellarroute-sdk -- -D warnings` passes
+
+**Fix 2: Unused import in contracts**
+- **Issue:** Clippy error `unused import: Env` in `crates/contracts/src/lib.rs`
+- **Fix:** Removed unused `Env` import from soroban_sdk
+- **Verification:** ✅ `cargo clippy -p stellarroute-contracts -- -D warnings` passes
+
 ### Next Steps
 1. Push changes to trigger CI pipeline
 2. Verify CI passes all checks

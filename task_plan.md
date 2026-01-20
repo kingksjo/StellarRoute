@@ -56,6 +56,8 @@ Build Phase 1.1 foundation for StellarRoute: Set up development environment, pro
 | `expected item after doc comment` in server.rs | 1 | Added `pub struct Server;` to satisfy compiler, converted doc comments to regular comments |
 | `unused variable: api_url` in client.rs | 1 | Prefixed parameter with underscore: `_api_url` |
 | `cargo fmt -- --check` failing (rustfmt not installed) | 1 | Installed rustfmt locally, added rustfmt installation step to CI workflow |
+| `empty line after doc comment` clippy error in client.rs | 1 | Converted outer doc comments (`///`) to inner doc comments (`//!`) since documenting the module |
+| `unused import: Env` in contracts/lib.rs | 1 | Removed unused `Env` import from soroban_sdk |
 
 ---
 

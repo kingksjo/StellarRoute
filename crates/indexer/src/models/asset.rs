@@ -42,3 +42,36 @@ impl Asset {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_asset_native_key() {
+        let asset = Asset::Native;
+        let (asset_type, code, issuer) = asset.key();
+        assert_eq!(asset_type, "native");
+        assert_eq!(code, None);
+        assert_eq!(issuer, None);
+    }
+
+    #[test]
+    fn test_asset_credit_alphanum4_key() {
+        let asset = Asset::CreditAlphanum4 {
+            asset_code: "USDC".to_string(),
+            asset_issuer: "GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN".to_string(),
+        };
+        let (asset_type, code, issuer) = asset.key();
+        assert_eq!(asset_type, "credit_alphanum4");
+        assert_eq!(code, Some("USDC".to_string()));
+        assert_eq!(issuer, Some("GA5ZSEJYB37JRC5AVCIA5MOP4RHTM335X2KGX3IHOJAPP5RE34K4KZVN".to_string()));
+    }
+
+    #[test]
+    fn test_asset_serialization() {
+        let asset = Asset::Native;
+        let json = serde_json::to_string(&asset).unwrap();
+        assert!(json.contains("native"));
+    }
+}

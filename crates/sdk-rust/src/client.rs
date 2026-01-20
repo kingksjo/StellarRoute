@@ -1,7 +1,7 @@
 //! StellarRoute API client
-
-/// Placeholder for SDK client
-/// TODO: Implement client for API interactions
+//!
+//! Placeholder for SDK client
+//! TODO: Implement client for API interactions
 
 pub struct StellarRouteClient {
     // TODO: Implement client
