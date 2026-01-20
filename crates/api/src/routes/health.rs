@@ -3,11 +3,7 @@
 use axum::{extract::State, Json};
 use std::sync::Arc;
 
-use crate::{
-    error::Result,
-    models::HealthResponse,
-    state::AppState,
-};
+use crate::{error::Result, models::HealthResponse, state::AppState};
 
 /// Health check endpoint
 ///

@@ -1,6 +1,9 @@
 //! Orderbook endpoint
 
-use axum::{extract::{Path, State}, Json};
+use axum::{
+    extract::{Path, State},
+    Json,
+};
 use sqlx::Row;
 use std::{collections::BTreeMap, sync::Arc};
 use tracing::{debug, warn};

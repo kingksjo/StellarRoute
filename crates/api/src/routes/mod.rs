@@ -5,10 +5,7 @@ pub mod orderbook;
 pub mod pairs;
 pub mod quote;
 
-use axum::{
-    routing::get,
-    Router,
-};
+use axum::{routing::get, Router};
 use std::sync::Arc;
 
 use crate::state::AppState;

@@ -154,10 +154,7 @@ where
 }
 
 /// Middleware function for rate limiting
-pub async fn rate_limit_middleware(
-    req: Request,
-    next: Next,
-) -> Result<Response, StatusCode> {
+pub async fn rate_limit_middleware(req: Request, next: Next) -> Result<Response, StatusCode> {
     // This is a simplified version - the Layer approach above is more robust
     Ok(next.run(req).await)
 }

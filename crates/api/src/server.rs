@@ -8,13 +8,7 @@ use tracing::info;
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
-use crate::{
-    docs::ApiDoc,
-    error::Result,
-    middleware::RateLimitLayer,
-    routes,
-    state::AppState,
-};
+use crate::{docs::ApiDoc, error::Result, middleware::RateLimitLayer, routes, state::AppState};
 
 /// API server configuration
 #[derive(Debug, Clone)]
@@ -57,8 +51,8 @@ impl Server {
         let mut app = routes::create_router(state);
 
         // Add Swagger UI for API documentation
-        let swagger = SwaggerUi::new("/swagger-ui")
-            .url("/api-docs/openapi.json", ApiDoc::openapi());
+        let swagger =
+            SwaggerUi::new("/swagger-ui").url("/api-docs/openapi.json", ApiDoc::openapi());
         app = app.merge(swagger);
 
         // Add CORS if enabled
@@ -92,9 +86,7 @@ impl Server {
             .await
             .expect("Failed to bind address");
 
-        axum::serve(listener, self.app)
-            .await
-            .expect("Server error");
+        axum::serve(listener, self.app).await.expect("Server error");
 
         Ok(())
     }

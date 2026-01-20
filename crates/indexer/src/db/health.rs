@@ -93,10 +93,7 @@ impl HealthMonitor {
 
     /// Check if database is healthy
     pub async fn is_healthy(&self) -> bool {
-        sqlx::query("select 1")
-            .execute(&self.pool)
-            .await
-            .is_ok()
+        sqlx::query("select 1").execute(&self.pool).await.is_ok()
     }
 }
 
@@ -126,10 +123,7 @@ mod tests {
 
     #[test]
     fn test_pool_stats_all_idle() {
-        let stats = PoolStats {
-            size: 10,
-            idle: 10,
-        };
+        let stats = PoolStats { size: 10, idle: 10 };
         assert_eq!(stats.active(), 0);
     }
 }

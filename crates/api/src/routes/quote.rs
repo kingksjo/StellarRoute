@@ -10,7 +10,10 @@ use tracing::debug;
 
 use crate::{
     error::{ApiError, Result},
-    models::{request::{AssetPath, QuoteParams}, AssetInfo, PathStep, QuoteResponse},
+    models::{
+        request::{AssetPath, QuoteParams},
+        AssetInfo, PathStep, QuoteResponse,
+    },
     state::AppState,
 };
 
@@ -39,7 +42,10 @@ pub async fn get_quote(
     Path((base, quote)): Path<(String, String)>,
     Query(params): Query<QuoteParams>,
 ) -> Result<Json<QuoteResponse>> {
-    debug!("Getting quote for {}/{} with params: {:?}", base, quote, params);
+    debug!(
+        "Getting quote for {}/{} with params: {:?}",
+        base, quote, params
+    );
 
     // Parse asset identifiers
     let base_asset = AssetPath::parse(&base)

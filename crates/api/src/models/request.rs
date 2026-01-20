@@ -90,8 +90,9 @@ mod tests {
 
     #[test]
     fn test_parse_code_and_issuer() {
-        let asset = AssetPath::parse("USDC:GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5")
-            .unwrap();
+        let asset =
+            AssetPath::parse("USDC:GBBD47IF6LWK7P7MDEVSCWR7DPUWV3NY3DTQEVFL4NAT4AQH3ZLLFLA5")
+                .unwrap();
         assert_eq!(asset.asset_code, "USDC");
         assert_eq!(
             asset.asset_issuer.as_deref(),
