@@ -30,6 +30,18 @@ pub struct HorizonClient {
     retry_config: RetryConfig,
 }
 
+/// Parameters for fetching an orderbook snapshot.
+#[derive(Debug, Clone)]
+pub struct OrderbookRequest<'a> {
+    pub selling_asset_type: &'a str,
+    pub selling_asset_code: Option<&'a str>,
+    pub selling_asset_issuer: Option<&'a str>,
+    pub buying_asset_type: &'a str,
+    pub buying_asset_code: Option<&'a str>,
+    pub buying_asset_issuer: Option<&'a str>,
+    pub limit: Option<u32>,
+}
+
 impl HorizonClient {
     pub fn new(base_url: impl Into<String>) -> Self {
         Self::with_retry_config(base_url, RetryConfig::default())
@@ -141,46 +153,29 @@ impl HorizonClient {
     /// Fetch orderbook snapshot for a trading pair.
     ///
     /// Endpoint: `GET /order_book`
-    /// Parameters:
-    /// - `selling_asset_type`: Type of selling asset (native, credit_alphanum4, credit_alphanum12)
-    /// - `selling_asset_code`: Code of selling asset (optional for native)
-    /// - `selling_asset_issuer`: Issuer of selling asset (optional for native)
-    /// - `buying_asset_type`: Type of buying asset
-    /// - `buying_asset_code`: Code of buying asset (optional for native)
-    /// - `buying_asset_issuer`: Issuer of buying asset (optional for native)
-    /// - `limit`: Number of price levels to fetch (default: 20)
-    pub async fn get_orderbook(
-        &self,
-        selling_asset_type: &str,
-        selling_asset_code: Option<&str>,
-        selling_asset_issuer: Option<&str>,
-        buying_asset_type: &str,
-        buying_asset_code: Option<&str>,
-        buying_asset_issuer: Option<&str>,
-        limit: Option<u32>,
-    ) -> Result<serde_json::Value> {
-        let limit = limit.unwrap_or(20);
+    pub async fn get_orderbook(&self, req: OrderbookRequest<'_>) -> Result<serde_json::Value> {
+        let limit = req.limit.unwrap_or(20);
         let mut url = format!(
             "{}/order_book?selling_asset_type={}&buying_asset_type={}&limit={}",
-            self.base_url, selling_asset_type, buying_asset_type, limit
+            self.base_url, req.selling_asset_type, req.buying_asset_type, limit
         );
 
         // Add optional parameters for selling asset
-        if let Some(code) = selling_asset_code {
+        if let Some(code) = req.selling_asset_code {
             url.push_str("&selling_asset_code=");
             url.push_str(code);
         }
-        if let Some(issuer) = selling_asset_issuer {
+        if let Some(issuer) = req.selling_asset_issuer {
             url.push_str("&selling_asset_issuer=");
             url.push_str(issuer);
         }
 
         // Add optional parameters for buying asset
-        if let Some(code) = buying_asset_code {
+        if let Some(code) = req.buying_asset_code {
             url.push_str("&buying_asset_code=");
             url.push_str(code);
         }
-        if let Some(issuer) = buying_asset_issuer {
+        if let Some(issuer) = req.buying_asset_issuer {
             url.push_str("&buying_asset_issuer=");
             url.push_str(issuer);
         }
