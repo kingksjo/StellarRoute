@@ -75,8 +75,12 @@ impl HorizonClient {
 
                     if !e.is_retryable() || attempt >= self.retry_config.max_retries {
                         match e.log_level() {
-                            tracing::Level::ERROR => tracing::error!("Request failed after {} attempts: {}", attempt, e),
-                            tracing::Level::WARN => tracing::warn!("Request failed after {} attempts: {}", attempt, e),
+                            tracing::Level::ERROR => {
+                                tracing::error!("Request failed after {} attempts: {}", attempt, e)
+                            }
+                            tracing::Level::WARN => {
+                                tracing::warn!("Request failed after {} attempts: {}", attempt, e)
+                            }
                             _ => tracing::info!("Request failed after {} attempts: {}", attempt, e),
                         }
                         return Err(e);
@@ -129,7 +133,7 @@ impl HorizonClient {
         self.retry_request(|| async {
             debug!("Fetching offers from: {}", url_clone);
             let resp = client.get(&url_clone).send().await?;
-            
+
             let status = resp.status();
             if !status.is_success() {
                 let error_body = resp.text().await.unwrap_or_default();
@@ -182,7 +186,7 @@ impl HorizonClient {
         self.retry_request(|| async {
             debug!("Fetching orderbook from: {}", url_clone);
             let resp = client.get(&url_clone).send().await?;
-            
+
             let status = resp.status();
             if !status.is_success() {
                 let error_body = resp.text().await.unwrap_or_default();
@@ -294,7 +298,9 @@ impl HorizonClient {
             }),
             other => Err(IndexerError::InvalidAsset {
                 asset: other.to_string(),
-                reason: "Unknown asset type, expected: native, credit_alphanum4, or credit_alphanum12".to_string(),
+                reason:
+                    "Unknown asset type, expected: native, credit_alphanum4, or credit_alphanum12"
+                        .to_string(),
             }),
         }
     }

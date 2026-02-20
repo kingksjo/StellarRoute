@@ -30,12 +30,13 @@ impl Offer {
             });
         }
 
-        let amount_f64: f64 = self.amount.parse().map_err(|_| {
-            IndexerError::NumericParse {
+        let amount_f64: f64 = self
+            .amount
+            .parse()
+            .map_err(|_| IndexerError::NumericParse {
                 value: self.amount.clone(),
                 expected_type: "positive number".to_string(),
-            }
-        })?;
+            })?;
         if amount_f64 <= 0.0 {
             return Err(IndexerError::InvalidOffer {
                 offer_id: self.id.to_string(),
@@ -43,11 +44,9 @@ impl Offer {
             });
         }
 
-        let price_f64: f64 = self.price.parse().map_err(|_| {
-            IndexerError::NumericParse {
-                value: self.price.clone(),
-                expected_type: "positive number".to_string(),
-            }
+        let price_f64: f64 = self.price.parse().map_err(|_| IndexerError::NumericParse {
+            value: self.price.clone(),
+            expected_type: "positive number".to_string(),
         })?;
         if price_f64 <= 0.0 {
             return Err(IndexerError::InvalidOffer {
@@ -78,12 +77,13 @@ impl TryFrom<HorizonOffer> for Offer {
     type Error = IndexerError;
 
     fn try_from(horizon_offer: HorizonOffer) -> Result<Self> {
-        let id = horizon_offer.id.parse::<u64>().map_err(|_| {
-            IndexerError::NumericParse {
+        let id = horizon_offer
+            .id
+            .parse::<u64>()
+            .map_err(|_| IndexerError::NumericParse {
                 value: horizon_offer.id.clone(),
                 expected_type: "u64 offer ID".to_string(),
-            }
-        })?;
+            })?;
 
         // Parse assets using the client's parse_asset method
         // We'll need to pass the client or make parse_asset a standalone function
@@ -122,46 +122,51 @@ impl TryFrom<HorizonOffer> for Offer {
 }
 
 fn parse_asset_from_value(v: &serde_json::Value) -> Result<Asset> {
-    let asset_type = v.get("asset_type").and_then(|x| x.as_str()).ok_or_else(|| {
-        IndexerError::MissingField {
+    let asset_type = v
+        .get("asset_type")
+        .and_then(|x| x.as_str())
+        .ok_or_else(|| IndexerError::MissingField {
             field: "asset_type".to_string(),
             context: "Horizon API asset response".to_string(),
-        }
-    })?;
+        })?;
 
     match asset_type {
         "native" => Ok(Asset::Native),
         "credit_alphanum4" => Ok(Asset::CreditAlphanum4 {
-            asset_code: v.get("asset_code").and_then(|x| x.as_str()).ok_or_else(|| {
-                IndexerError::MissingField {
+            asset_code: v
+                .get("asset_code")
+                .and_then(|x| x.as_str())
+                .ok_or_else(|| IndexerError::MissingField {
                     field: "asset_code".to_string(),
                     context: "credit_alphanum4 asset".to_string(),
-                }
-            })?
-            .to_string(),
-            asset_issuer: v.get("asset_issuer").and_then(|x| x.as_str()).ok_or_else(|| {
-                IndexerError::MissingField {
+                })?
+                .to_string(),
+            asset_issuer: v
+                .get("asset_issuer")
+                .and_then(|x| x.as_str())
+                .ok_or_else(|| IndexerError::MissingField {
                     field: "asset_issuer".to_string(),
                     context: "credit_alphanum4 asset".to_string(),
-                }
-            })?
-            .to_string(),
+                })?
+                .to_string(),
         }),
         "credit_alphanum12" => Ok(Asset::CreditAlphanum12 {
-            asset_code: v.get("asset_code").and_then(|x| x.as_str()).ok_or_else(|| {
-                IndexerError::MissingField {
+            asset_code: v
+                .get("asset_code")
+                .and_then(|x| x.as_str())
+                .ok_or_else(|| IndexerError::MissingField {
                     field: "asset_code".to_string(),
                     context: "credit_alphanum12 asset".to_string(),
-                }
-            })?
-            .to_string(),
-            asset_issuer: v.get("asset_issuer").and_then(|x| x.as_str()).ok_or_else(|| {
-                IndexerError::MissingField {
+                })?
+                .to_string(),
+            asset_issuer: v
+                .get("asset_issuer")
+                .and_then(|x| x.as_str())
+                .ok_or_else(|| IndexerError::MissingField {
                     field: "asset_issuer".to_string(),
                     context: "credit_alphanum12 asset".to_string(),
-                }
-            })?
-            .to_string(),
+                })?
+                .to_string(),
         }),
         other => Err(IndexerError::InvalidAsset {
             asset: other.to_string(),
