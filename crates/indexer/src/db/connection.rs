@@ -58,8 +58,8 @@ impl Database {
             .map_err(|e| {
                 error!("Migration 0002 failed: {}", e);
                 IndexerError::DatabaseMigration(format!(
-                    "Failed to run 0002_performance_indexes.sql: {}"
-                    , e
+                    "Failed to run 0002_performance_indexes.sql: {}",
+                    e
                 ))
             })?;
 

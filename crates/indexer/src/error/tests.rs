@@ -60,7 +60,7 @@ fn test_invalid_config_not_retryable() {
 fn test_json_parse_error_conversion() {
     let json_err = serde_json::from_str::<serde_json::Value>("invalid json");
     assert!(json_err.is_err());
-    
+
     let indexer_err: IndexerError = json_err.unwrap_err().into();
     match indexer_err {
         IndexerError::JsonParse { context, error } => {
