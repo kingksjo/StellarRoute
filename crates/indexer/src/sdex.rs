@@ -168,7 +168,7 @@ impl SdexIndexer {
         .bind(asset_issuer)
         .execute(pool)
         .await
-        .map_err(IndexerError::Database)?;
+        .map_err(IndexerError::DatabaseQuery)?;
 
         Ok(())
     }
@@ -215,7 +215,7 @@ impl SdexIndexer {
         .bind(offer.last_modified_time)
         .execute(pool)
         .await
-        .map_err(IndexerError::Database)?;
+        .map_err(IndexerError::DatabaseQuery)?;
 
         Ok(())
     }
