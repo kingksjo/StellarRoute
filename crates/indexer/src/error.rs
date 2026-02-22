@@ -95,13 +95,16 @@ impl IndexerError {
     }
 
     pub fn is_retryable(&self) -> bool {
-        matches!(
-            self,
+        match self {
             Self::NetworkTimeout { .. }
-                | Self::NetworkConnection(_)
-                | Self::RateLimitExceeded { .. }
-                | Self::HttpRequest { .. }
-        )
+            | Self::NetworkConnection(_)
+            | Self::RateLimitExceeded { .. }
+            | Self::HttpRequest { .. } => true,
+            // 5xx server errors are transient and worth retrying;
+            // 4xx client errors are permanent and should not be retried.
+            Self::StellarApi { status, .. } => *status >= 500,
+            _ => false,
+        }
     }
 }
 

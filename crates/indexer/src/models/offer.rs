@@ -219,6 +219,8 @@ mod tests {
             price: "1.5".to_string(),
             price_r: Some(HorizonPriceR { n: 3, d: 2 }),
             last_modified_ledger: 12345,
+            last_modified_time: None,
+            sponsor: None,
         }
     }
 
