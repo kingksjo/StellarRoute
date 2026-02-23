@@ -20,4 +20,38 @@ pub enum ContractError {
     PoolCallFailed = 31,
     InvalidAmount = 40,
     Overflow = 41,
+    // ── Multi-sig governance ─────────────────────────────────────────────────
+    /// Contract is in multi-sig mode; use governance proposals instead.
+    UseGovernance = 50,
+    /// Contract is not yet in multi-sig mode; call migrate_to_multisig first.
+    NotMultiSig = 51,
+    ProposalNotFound = 52,
+    ProposalExpired = 53,
+    ProposalAlreadyExecuted = 54,
+    /// Signer already approved this proposal.
+    AlreadyApproved = 55,
+    /// Approval count below the configured threshold.
+    ThresholdNotMet = 56,
+    /// Signer list has reached the 10-signer maximum.
+    SignerLimitReached = 57,
+    // ── Upgrade ──────────────────────────────────────────────────────────────
+    /// Time-lock delay has not elapsed yet.
+    UpgradeLocked = 60,
+    /// An upgrade is already pending; cancel it before proposing a new one.
+    UpgradePending = 61,
+    /// No upgrade is pending.
+    NoUpgradePending = 62,
+    /// The proposed WASM hash is identical to the current one.
+    SameWasmHash = 63,
+    /// Post-upgrade migration hook has already been executed for this version.
+    MigrationAlreadyDone = 70,
+    // ── Token allowlist ──────────────────────────────────────────────────────
+    /// Asset is not on the allowlist and cannot be routed.
+    TokenNotAllowed = 80,
+    /// Token is already in the allowlist.
+    TokenAlreadyAdded = 81,
+    /// Attempting to remove a token that is referenced by an active pool.
+    TokenInUse = 82,
+    /// Batch add exceeds the 10-token-per-call limit.
+    BatchTooLarge = 83,
 }

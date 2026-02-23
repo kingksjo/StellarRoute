@@ -1,5 +1,5 @@
-use crate::types::Route;
-use soroban_sdk::{symbol_short, Address, Env, Symbol};
+use crate::types::{ProposalAction, Route};
+use soroban_sdk::{symbol_short, Address, BytesN, Env, Symbol};
 
 pub fn initialized(e: &Env, admin: Address, fee_rate: u32) {
     let topics = (Symbol::new(e, "StellarRoute"), symbol_short!("init"));
@@ -43,4 +43,88 @@ pub fn swap_executed(
         topics,
         (amount_in, amount_out, fee, route, e.ledger().sequence()),
     );
+}
+
+// ─── Multi-sig governance events ─────────────────────────────────────────────
+
+pub fn governance_migrated(e: &Env, old_admin: Address, signer_count: u32, threshold: u32) {
+    let topics = (Symbol::new(e, "StellarRoute"), symbol_short!("gov_mgr"));
+    e.events()
+        .publish(topics, (old_admin, signer_count, threshold));
+}
+
+pub fn proposal_created(e: &Env, id: u64, proposer: Address, action: ProposalAction) {
+    let topics = (Symbol::new(e, "StellarRoute"), symbol_short!("prop_new"));
+    e.events().publish(topics, (id, proposer, action));
+}
+
+pub fn proposal_approved(e: &Env, id: u64, signer: Address, approvals: u32) {
+    let topics = (Symbol::new(e, "StellarRoute"), symbol_short!("prop_apr"));
+    e.events().publish(topics, (id, signer, approvals));
+}
+
+pub fn proposal_executed(e: &Env, id: u64) {
+    let topics = (Symbol::new(e, "StellarRoute"), symbol_short!("prop_exe"));
+    e.events().publish(topics, id);
+}
+
+pub fn proposal_cancelled(e: &Env, id: u64, by: Address) {
+    let topics = (Symbol::new(e, "StellarRoute"), symbol_short!("prop_can"));
+    e.events().publish(topics, (id, by));
+}
+
+pub fn guardian_set(e: &Env, guardian: Address) {
+    let topics = (Symbol::new(e, "StellarRoute"), symbol_short!("grd_set"));
+    e.events().publish(topics, guardian);
+}
+
+pub fn guardian_paused(e: &Env, guardian: Address) {
+    let topics = (Symbol::new(e, "StellarRoute"), symbol_short!("grd_pse"));
+    e.events().publish(topics, guardian);
+}
+
+// ─── Upgrade events ──────────────────────────────────────────────────────────
+
+pub fn upgrade_proposed(
+    e: &Env,
+    proposer: Address,
+    old_hash: BytesN<32>,
+    new_hash: BytesN<32>,
+    execute_after: u64,
+) {
+    let topics = (Symbol::new(e, "StellarRoute"), symbol_short!("upg_prp"));
+    e.events()
+        .publish(topics, (proposer, old_hash, new_hash, execute_after));
+}
+
+pub fn upgrade_completed(e: &Env, old_hash: BytesN<32>, new_hash: BytesN<32>, ledger: u64) {
+    let topics = (Symbol::new(e, "StellarRoute"), symbol_short!("upg_done"));
+    e.events().publish(topics, (old_hash, new_hash, ledger));
+}
+
+pub fn upgrade_cancelled(e: &Env, by: Address) {
+    let topics = (Symbol::new(e, "StellarRoute"), symbol_short!("upg_can"));
+    e.events().publish(topics, by);
+}
+
+pub fn migration_completed(e: &Env, major: u32, minor: u32, patch: u32) {
+    let topics = (Symbol::new(e, "StellarRoute"), symbol_short!("mig_done"));
+    e.events().publish(topics, (major, minor, patch));
+}
+
+// ─── Token allowlist events ───────────────────────────────────────────────────
+
+pub fn token_added(e: &Env, asset: crate::types::Asset, added_by: Address) {
+    let topics = (Symbol::new(e, "StellarRoute"), symbol_short!("tok_add"));
+    e.events().publish(topics, (asset, added_by));
+}
+
+pub fn token_removed(e: &Env, asset: crate::types::Asset, removed_by: Address) {
+    let topics = (Symbol::new(e, "StellarRoute"), symbol_short!("tok_rm"));
+    e.events().publish(topics, (asset, removed_by));
+}
+
+pub fn token_updated(e: &Env, asset: crate::types::Asset, updated_by: Address) {
+    let topics = (Symbol::new(e, "StellarRoute"), symbol_short!("tok_upd"));
+    e.events().publish(topics, (asset, updated_by));
 }

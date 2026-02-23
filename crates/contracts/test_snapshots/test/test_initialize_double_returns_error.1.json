@@ -150,7 +150,12 @@
                 },
                 {
                   "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4"
-                }
+                },
+                "void",
+                "void",
+                "void",
+                "void",
+                "void"
               ]
             }
           }
@@ -237,7 +242,12 @@
                 },
                 {
                   "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK3IM"
-                }
+                },
+                "void",
+                "void",
+                "void",
+                "void",
+                "void"
               ]
             }
           }
@@ -330,7 +340,12 @@
                     },
                     {
                       "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK3IM"
-                    }
+                    },
+                    "void",
+                    "void",
+                    "void",
+                    "void",
+                    "void"
                   ]
                 }
               ]
