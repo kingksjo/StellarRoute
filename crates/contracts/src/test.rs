@@ -62,20 +62,20 @@ fn test_get_fee_rate_after_init() {
     assert_eq!(client.get_fee_rate_value(), 250);
 }
 
-// ── get_fee_to ───────────────────────────────────────────────────────
+// ── get_fee_to_address ───────────────────────────────────────────────
 
 #[test]
-fn test_get_fee_to_uninitialized() {
+fn test_get_fee_to_address_uninitialized() {
     let (_env, client, _admin, _fee_to) = setup();
-    let result = client.try_get_fee_to();
+    let result = client.try_get_fee_to_address();
     assert!(result.is_err());
 }
 
 #[test]
-fn test_get_fee_to_after_init() {
+fn test_get_fee_to_address_after_init() {
     let (_env, client, admin, fee_to) = setup();
     client.initialize(&admin, &100, &fee_to);
-    assert_eq!(client.get_fee_to(), fee_to);
+    assert_eq!(client.get_fee_to_address(), fee_to);
 }
 
 // ── is_paused ────────────────────────────────────────────────────────

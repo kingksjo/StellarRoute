@@ -53,6 +53,15 @@ pub struct QuoteResult {
     pub valid_until: u64,
 }
 
+#[contracttype]
+#[derive(Clone, Debug)]
+pub struct SwapResult {
+    pub amount_in: i128,
+    pub amount_out: i128,
+    pub route: Route,
+    pub executed_at: u64,
+}
+
 // Interface for AMM pools (SEP-like standard)
 pub trait LiquidityPoolInterface {
     fn get_rsrvs(e: Env) -> (i128, i128);

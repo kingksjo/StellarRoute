@@ -1,0 +1,58 @@
+use crate::adapters::PoolAdapterTrait;
+use soroban_sdk::{contract, contractimpl, symbol_short, vec, Address, Env, IntoVal};
+
+#[contract]
+pub struct ConstantProductAdapter;
+
+#[contractimpl]
+impl PoolAdapterTrait for ConstantProductAdapter {
+    fn swap(
+        e: Env,
+        input_asset: Address,
+        output_asset: Address,
+        amount_in: i128,
+        min_out: i128,
+    ) -> i128 {
+        // 1. Get the underlying pool address (stored in this adapter's instance storage)
+        let pool_address: Address = e.storage().instance().get(&symbol_short!("POOL")).unwrap();
+
+        // 2. Translate to the specific AMM's function (e.g., Soroswap uses 'swap')
+        // We use CCI to call the actual pool
+        let out: i128 = e.invoke_contract(
+            &pool_address,
+            &symbol_short!("swap"),
+            vec![
+                &e,
+                input_asset.into_val(&e),
+                output_asset.into_val(&e),
+                amount_in.into_val(&e),
+                min_out.into_val(&e),
+            ],
+        );
+
+        out
+    }
+
+    fn preview_quote(
+        e: Env,
+        _input_asset: Address,  // Added underscore
+        _output_asset: Address, // Added underscore
+        amount_in: i128,
+    ) -> i128 {
+        let (res_in, res_out) = Self::get_reserves(e.clone());
+
+        // dy = (y * dx) / (x + dx)
+        let fee_multiplier = 997;
+        let amount_with_fee = amount_in * fee_multiplier;
+        let numerator = amount_with_fee * res_out;
+        let denominator = (res_in * 1000) + amount_with_fee;
+
+        numerator / denominator
+    }
+
+    fn get_reserves(e: Env) -> (i128, i128) {
+        let pool_address: Address = e.storage().instance().get(&symbol_short!("POOL")).unwrap();
+        // Call the underlying pool's reserve function
+        e.invoke_contract(&pool_address, &symbol_short!("get_rsrvs"), vec![&e])
+    }
+}

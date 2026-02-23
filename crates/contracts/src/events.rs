@@ -21,3 +21,8 @@ pub fn paused(e: &Env) {
 pub fn unpaused(e: &Env) {
     e.events().publish((symbol_short!("unpaused"),), ());
 }
+
+pub fn swap_executed(e: &Env, sender: Address, amount_in: i128, amount_out: i128, fee: i128) {
+    let topics = (symbol_short!("swap"), sender);
+    e.events().publish(topics, (amount_in, amount_out, fee));
+}
