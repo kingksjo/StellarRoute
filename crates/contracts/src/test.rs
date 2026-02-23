@@ -1,8 +1,6 @@
-#![cfg(test)]
-
 use soroban_sdk::{testutils::Address as _, Address, Env};
 
-use crate::{StellarRoute, StellarRouteClient};
+use crate::router::{StellarRoute, StellarRouteClient};
 
 fn setup() -> (Env, StellarRouteClient<'static>, Address, Address) {
     let env = Env::default();
