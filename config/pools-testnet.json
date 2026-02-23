@@ -1,0 +1,15 @@
+{
+  "description": "Testnet liquidity pool addresses to register with the StellarRoute router contract.",
+  "pools": [
+    {
+      "name": "XLM/USDC Testnet Pool",
+      "address": "PLACEHOLDER_POOL_ADDRESS_1",
+      "notes": "Replace with actual testnet pool contract address after deployment."
+    },
+    {
+      "name": "XLM/BTC Testnet Pool",
+      "address": "PLACEHOLDER_POOL_ADDRESS_2",
+      "notes": "Replace with actual testnet pool contract address after deployment."
+    }
+  ]
+}

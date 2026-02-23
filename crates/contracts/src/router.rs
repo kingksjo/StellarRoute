@@ -4,6 +4,8 @@ use crate::storage::{self, extend_instance_ttl, get_fee_rate, is_supported_pool,
 use crate::types::{QuoteResult, Route};
 use soroban_sdk::{contract, contractimpl, symbol_short, vec, Address, Env, IntoVal};
 
+const CONTRACT_VERSION: u32 = 1;
+
 #[contract]
 pub struct StellarRoute;
 
@@ -79,6 +81,41 @@ impl StellarRoute {
         events::unpaused(&e);
         Ok(())
     }
+
+    // --- Read-only getters for deployment verification and monitoring ---
+
+    pub fn version(_e: Env) -> u32 {
+        CONTRACT_VERSION
+    }
+
+    pub fn get_admin(e: Env) -> Result<Address, ContractError> {
+        if !storage::is_initialized(&e) {
+            return Err(ContractError::NotInitialized);
+        }
+        Ok(storage::get_admin(&e))
+    }
+
+    pub fn get_fee_rate_value(e: Env) -> u32 {
+        storage::get_fee_rate(&e)
+    }
+
+    pub fn get_fee_to(e: Env) -> Result<Address, ContractError> {
+        storage::get_fee_to(&e).ok_or(ContractError::NotInitialized)
+    }
+
+    pub fn is_paused(e: Env) -> bool {
+        storage::get_paused(&e)
+    }
+
+    pub fn get_pool_count(e: Env) -> u32 {
+        storage::get_pool_count(&e)
+    }
+
+    pub fn is_pool_registered(e: Env, pool: Address) -> bool {
+        storage::is_supported_pool(&e, pool)
+    }
+
+    // --- Core operations ---
 
     pub fn get_quote(e: Env, amount_in: i128, route: Route) -> Result<QuoteResult, ContractError> {
         if amount_in <= 0 {

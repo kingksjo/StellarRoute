@@ -51,6 +51,21 @@ pub fn set_pool_count(e: &Env, count: u32) {
     e.storage().instance().set(&StorageKey::PoolCount, &count);
 }
 
+pub fn get_fee_to(e: &Env) -> Option<Address> {
+    e.storage().instance().get(&StorageKey::FeeTo)
+}
+
+pub fn get_paused(e: &Env) -> bool {
+    e.storage()
+        .instance()
+        .get(&StorageKey::Paused)
+        .unwrap_or(false)
+}
+
+pub fn is_initialized(e: &Env) -> bool {
+    e.storage().instance().has(&StorageKey::Admin)
+}
+
 pub fn is_supported_pool(e: &Env, pool: Address) -> bool {
     e.storage()
         .persistent()
