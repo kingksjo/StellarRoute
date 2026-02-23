@@ -1,14 +1,12 @@
-//! StellarRoute Smart Contracts
-//!
-//! Soroban smart contracts for router logic and AMM swap execution.
-
 #![no_std]
-use soroban_sdk::{contract, contractimpl};
 
-#[contract]
-pub struct RouterContract;
+pub mod errors;
+pub mod events;
+pub mod router;
+pub mod storage;
+pub mod types;
 
-#[contractimpl]
-impl RouterContract {
-    // TODO: Implement router contract functions
-}
+#[cfg(test)]
+mod test;
+
+pub use crate::router::StellarRoute; // Export the contract
