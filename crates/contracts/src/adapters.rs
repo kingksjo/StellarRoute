@@ -2,7 +2,6 @@ use soroban_sdk::{contractclient, Address, Env};
 
 #[contractclient(name = "PoolAdapterClient")]
 pub trait PoolAdapterTrait {
-    // Executes the actual swap
     fn swap(
         e: Env,
         input_asset: Address,
@@ -11,9 +10,8 @@ pub trait PoolAdapterTrait {
         min_out: i128,
     ) -> i128;
 
-    // Preview the output (used by get_quote)
-    fn preview_quote(e: Env, input_asset: Address, output_asset: Address, amount_in: i128) -> i128;
+    // RENAME THIS from get_quote to adapter_quote
+    fn adapter_quote(e: Env, input_asset: Address, output_asset: Address, amount_in: i128) -> i128;
 
-    // Fetch liquidity depth
     fn get_reserves(e: Env) -> (i128, i128);
 }

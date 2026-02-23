@@ -5,7 +5,7 @@ use crate::storage::{
     transfer_asset, StorageKey,
 };
 use crate::types::{QuoteResult, Route, SwapParams, SwapResult};
-use soroban_sdk::{contract, contractimpl, symbol_short, vec, Address, Env, IntoVal};
+use soroban_sdk::{contract, contractimpl, symbol_short, vec, Address, Env, IntoVal, Symbol};
 
 const CONTRACT_VERSION: u32 = 1;
 
@@ -127,6 +127,7 @@ impl StellarRoute {
         Ok(())
     }
 
+    /// Public entry point for users to get quotes
     pub fn get_quote(e: Env, amount_in: i128, route: Route) -> Result<QuoteResult, ContractError> {
         if amount_in <= 0 || route.hops.is_empty() || route.hops.len() > 4 {
             return Err(ContractError::InvalidRoute);
@@ -143,7 +144,7 @@ impl StellarRoute {
 
             let call_result = e.try_invoke_contract::<i128, soroban_sdk::Error>(
                 &hop.pool,
-                &symbol_short!("get_quote"),
+                &Symbol::new(&e, "adapter_quote"),
                 vec![
                     &e,
                     hop.source.into_val(&e),
@@ -233,6 +234,7 @@ impl StellarRoute {
         }
 
         let last_hop = params.route.hops.get(params.route.hops.len() - 1).unwrap();
+
         transfer_asset(
             &e,
             &last_hop.destination,
@@ -240,6 +242,7 @@ impl StellarRoute {
             &params.recipient,
             final_output,
         );
+
         transfer_asset(
             &e,
             &last_hop.destination,
@@ -249,7 +252,15 @@ impl StellarRoute {
         );
 
         increment_nonce(&e, sender.clone());
-        events::swap_executed(&e, sender, params.amount_in, final_output, fee_amount);
+
+        events::swap_executed(
+            &e,
+            sender,
+            params.amount_in,
+            final_output,
+            fee_amount,
+            params.route.clone(),
+        );
 
         Ok(SwapResult {
             amount_in: params.amount_in,

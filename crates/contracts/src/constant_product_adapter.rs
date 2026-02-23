@@ -33,10 +33,10 @@ impl PoolAdapterTrait for ConstantProductAdapter {
         out
     }
 
-    fn preview_quote(
+    fn adapter_quote(
         e: Env,
-        _input_asset: Address,  // Added underscore
-        _output_asset: Address, // Added underscore
+        _input_asset: Address,
+        _output_asset: Address,
         amount_in: i128,
     ) -> i128 {
         let (res_in, res_out) = Self::get_reserves(e.clone());

@@ -1,28 +1,46 @@
+use crate::types::Route;
 use soroban_sdk::{symbol_short, Address, Env, Symbol};
 
 pub fn initialized(e: &Env, admin: Address, fee_rate: u32) {
-    let topics = (symbol_short!("init"), admin);
-    e.events().publish(topics, fee_rate);
+    let topics = (Symbol::new(e, "StellarRoute"), symbol_short!("init"));
+    e.events().publish(topics, (admin, fee_rate));
 }
 
 pub fn admin_changed(e: &Env, old_admin: Address, new_admin: Address) {
-    let topics = (Symbol::new(e, "admin_changed"), old_admin);
-    e.events().publish(topics, new_admin);
+    let topics = (Symbol::new(e, "StellarRoute"), symbol_short!("adm_chg"));
+    e.events().publish(topics, (old_admin, new_admin));
 }
 
-pub fn pool_registered(e: &Env, pool: Address) {
-    e.events().publish((symbol_short!("reg_pool"),), pool);
+pub fn pool_registered(e: &Env, pool_address: Address) {
+    let topics = (Symbol::new(e, "StellarRoute"), symbol_short!("reg_pol"));
+    e.events().publish(topics, pool_address);
 }
 
 pub fn paused(e: &Env) {
-    e.events().publish((symbol_short!("paused"),), ());
+    let topics = (Symbol::new(e, "StellarRoute"), symbol_short!("paused"));
+    e.events().publish(topics, ());
 }
 
 pub fn unpaused(e: &Env) {
-    e.events().publish((symbol_short!("unpaused"),), ());
+    let topics = (Symbol::new(e, "StellarRoute"), symbol_short!("unpaused"));
+    e.events().publish(topics, ());
 }
 
-pub fn swap_executed(e: &Env, sender: Address, amount_in: i128, amount_out: i128, fee: i128) {
-    let topics = (symbol_short!("swap"), sender);
-    e.events().publish(topics, (amount_in, amount_out, fee));
+pub fn swap_executed(
+    e: &Env,
+    sender: Address,
+    amount_in: i128,
+    amount_out: i128,
+    fee: i128,
+    route: Route,
+) {
+    let topics = (
+        Symbol::new(e, "StellarRoute"),
+        symbol_short!("swap"),
+        sender,
+    );
+    e.events().publish(
+        topics,
+        (amount_in, amount_out, fee, route, e.ledger().sequence()),
+    );
 }
