@@ -7,6 +7,8 @@ use crate::storage::{
 use crate::types::{QuoteResult, Route, SwapParams, SwapResult};
 use soroban_sdk::{contract, contractimpl, symbol_short, vec, Address, Env, IntoVal, Symbol};
 
+const CONTRACT_VERSION: u32 = 1;
+
 #[contract]
 pub struct StellarRoute;
 
@@ -78,6 +80,41 @@ impl StellarRoute {
         Ok(())
     }
 
+    // --- Read-only getters for deployment verification and monitoring ---
+
+    pub fn version(_e: Env) -> u32 {
+        CONTRACT_VERSION
+    }
+
+    pub fn get_admin(e: Env) -> Result<Address, ContractError> {
+        if !storage::is_initialized(&e) {
+            return Err(ContractError::NotInitialized);
+        }
+        Ok(storage::get_admin(&e))
+    }
+
+    pub fn get_fee_rate_value(e: Env) -> u32 {
+        storage::get_fee_rate(&e)
+    }
+
+    pub fn get_fee_to_address(e: Env) -> Result<Address, ContractError> {
+        storage::get_fee_to_optional(&e).ok_or(ContractError::NotInitialized)
+    }
+
+    pub fn is_paused(e: Env) -> bool {
+        storage::get_paused(&e)
+    }
+
+    pub fn get_pool_count(e: Env) -> u32 {
+        storage::get_pool_count(&e)
+    }
+
+    pub fn is_pool_registered(e: Env, pool: Address) -> bool {
+        storage::is_supported_pool(&e, pool)
+    }
+
+    // --- Core operations ---
+
     pub fn require_not_paused(e: &Env) -> Result<(), ContractError> {
         let paused: bool = e
             .storage()
@@ -105,7 +142,6 @@ impl StellarRoute {
                 return Err(ContractError::PoolNotSupported);
             }
 
-            // FIX: Calling "adapter_quote" to avoid symbol collision with this function
             let call_result = e.try_invoke_contract::<i128, soroban_sdk::Error>(
                 &hop.pool,
                 &Symbol::new(&e, "adapter_quote"),
@@ -155,7 +191,6 @@ impl StellarRoute {
 
         let mut current_input_amount = params.amount_in;
 
-        // 1. Initial Transfer: User -> First Adapter
         let first_hop = params.route.hops.get(0).unwrap();
         transfer_asset(
             &e,
@@ -165,7 +200,6 @@ impl StellarRoute {
             params.amount_in,
         );
 
-        // 2. Multi-Hop Execution
         for i in 0..params.route.hops.len() {
             let hop = params.route.hops.get(i).unwrap();
 
@@ -181,7 +215,7 @@ impl StellarRoute {
                     hop.source.into_val(&e),
                     hop.destination.into_val(&e),
                     current_input_amount.into_val(&e),
-                    0_i128.into_val(&e), // min_out for intermediate steps
+                    0_i128.into_val(&e),
                 ],
             );
 
@@ -191,7 +225,6 @@ impl StellarRoute {
             };
         }
 
-        // 3. Fees and Slippage
         let fee_rate = get_fee_rate(&e);
         let fee_amount = (current_input_amount * fee_rate as i128) / 10000;
         let final_output = current_input_amount - fee_amount;
@@ -200,10 +233,8 @@ impl StellarRoute {
             return Err(ContractError::SlippageExceeded);
         }
 
-        // 4. Distribute final funds
         let last_hop = params.route.hops.get(params.route.hops.len() - 1).unwrap();
 
-        // Final Output -> User
         transfer_asset(
             &e,
             &last_hop.destination,
@@ -212,7 +243,6 @@ impl StellarRoute {
             final_output,
         );
 
-        // Fees -> Treasury
         transfer_asset(
             &e,
             &last_hop.destination,
@@ -221,10 +251,8 @@ impl StellarRoute {
             fee_amount,
         );
 
-        // 5. State & Events
         increment_nonce(&e, sender.clone());
 
-        // Issue #42: Updated to pass rich data to events
         events::swap_executed(
             &e,
             sender,

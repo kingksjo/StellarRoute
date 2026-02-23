@@ -34,7 +34,6 @@ pub fn swap_executed(
     fee: i128,
     route: Route,
 ) {
-    // The topic includes the sender address for easy filtering by the frontend
     let topics = (
         Symbol::new(e, "StellarRoute"),
         symbol_short!("swap"),

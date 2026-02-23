@@ -43,6 +43,15 @@ build/
 tarpaulin-report.html
 coverage/
 
+# Deployment artifacts (generated at runtime)
+config/deployment-*.json
+logs/
+
+# Soroban identities and secret keys
+.soroban/
+*.secret-key
+identity.toml
+
 # Local development
 .local/
 requirements.md

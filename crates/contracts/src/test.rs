@@ -1077,3 +1077,159 @@ fn test_pause_unpause_emit_events() {
     client.unpause();
     assert!(env.events().all().len() > before);
 }
+
+// ── Accessor / Getter Tests (from main) ───────────────────────────────────────
+
+#[test]
+fn test_version_returns_constant() {
+    let env = setup_env();
+    let id = env.register_contract(None, StellarRoute);
+    let client = StellarRouteClient::new(&env, &id);
+    assert_eq!(client.version(), 1);
+}
+
+#[test]
+fn test_get_admin_uninitialized() {
+    let env = setup_env();
+    let id = env.register_contract(None, StellarRoute);
+    let client = StellarRouteClient::new(&env, &id);
+    assert!(client.try_get_admin().is_err());
+}
+
+#[test]
+fn test_get_admin_after_init() {
+    let env = setup_env();
+    let (admin, _, client) = deploy_router(&env);
+    assert_eq!(client.get_admin(), admin);
+}
+
+#[test]
+fn test_get_admin_after_set_admin() {
+    let env = setup_env();
+    let (_, _, client) = deploy_router(&env);
+    let new_admin = Address::generate(&env);
+    client.set_admin(&new_admin);
+    assert_eq!(client.get_admin(), new_admin);
+}
+
+#[test]
+fn test_get_fee_rate_uninitialized() {
+    let env = setup_env();
+    let id = env.register_contract(None, StellarRoute);
+    let client = StellarRouteClient::new(&env, &id);
+    assert_eq!(client.get_fee_rate_value(), 0);
+}
+
+#[test]
+fn test_get_fee_rate_after_init() {
+    let env = setup_env();
+    let id = env.register_contract(None, StellarRoute);
+    let client = StellarRouteClient::new(&env, &id);
+    client.initialize(&Address::generate(&env), &250_u32, &Address::generate(&env));
+    assert_eq!(client.get_fee_rate_value(), 250);
+}
+
+#[test]
+fn test_get_fee_to_address_uninitialized() {
+    let env = setup_env();
+    let id = env.register_contract(None, StellarRoute);
+    let client = StellarRouteClient::new(&env, &id);
+    assert!(client.try_get_fee_to_address().is_err());
+}
+
+#[test]
+fn test_get_fee_to_address_after_init() {
+    let env = setup_env();
+    let fee_to = Address::generate(&env);
+    let id = env.register_contract(None, StellarRoute);
+    let client = StellarRouteClient::new(&env, &id);
+    client.initialize(&Address::generate(&env), &100_u32, &fee_to);
+    assert_eq!(client.get_fee_to_address(), fee_to);
+}
+
+#[test]
+fn test_is_paused_uninitialized() {
+    let env = setup_env();
+    let id = env.register_contract(None, StellarRoute);
+    let client = StellarRouteClient::new(&env, &id);
+    assert!(!client.is_paused());
+}
+
+#[test]
+fn test_is_paused_default_false() {
+    let env = setup_env();
+    let (_, _, client) = deploy_router(&env);
+    assert!(!client.is_paused());
+}
+
+#[test]
+fn test_is_paused_after_pause() {
+    let env = setup_env();
+    let (_, _, client) = deploy_router(&env);
+    client.pause();
+    assert!(client.is_paused());
+}
+
+#[test]
+fn test_is_paused_after_unpause() {
+    let env = setup_env();
+    let (_, _, client) = deploy_router(&env);
+    client.pause();
+    client.unpause();
+    assert!(!client.is_paused());
+}
+
+#[test]
+fn test_get_pool_count_uninitialized() {
+    let env = setup_env();
+    let id = env.register_contract(None, StellarRoute);
+    let client = StellarRouteClient::new(&env, &id);
+    assert_eq!(client.get_pool_count(), 0);
+}
+
+#[test]
+fn test_get_pool_count_after_init() {
+    let env = setup_env();
+    let (_, _, client) = deploy_router(&env);
+    assert_eq!(client.get_pool_count(), 0);
+}
+
+#[test]
+fn test_get_pool_count_increments() {
+    let env = setup_env();
+    let (_, _, client) = deploy_router(&env);
+    let pool1 = deploy_mock_pool(&env);
+    let pool2 = deploy_mock_pool(&env);
+    client.register_pool(&pool1);
+    assert_eq!(client.get_pool_count(), 1);
+    client.register_pool(&pool2);
+    assert_eq!(client.get_pool_count(), 2);
+}
+
+#[test]
+fn test_is_pool_registered_unknown() {
+    let env = setup_env();
+    let (_, _, client) = deploy_router(&env);
+    let pool = deploy_mock_pool(&env);
+    assert!(!client.is_pool_registered(&pool));
+}
+
+#[test]
+fn test_is_pool_registered_after_register() {
+    let env = setup_env();
+    let (_, _, client) = deploy_router(&env);
+    let pool = deploy_mock_pool(&env);
+    client.register_pool(&pool);
+    assert!(client.is_pool_registered(&pool));
+}
+
+#[test]
+fn test_is_pool_registered_different_pool() {
+    let env = setup_env();
+    let (_, _, client) = deploy_router(&env);
+    let pool1 = deploy_mock_pool(&env);
+    let pool2 = deploy_mock_pool(&env);
+    client.register_pool(&pool1);
+    assert!(client.is_pool_registered(&pool1));
+    assert!(!client.is_pool_registered(&pool2));
+}
