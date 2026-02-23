@@ -4,6 +4,7 @@ use stellarroute_indexer::config::IndexerConfig;
 use stellarroute_indexer::db::Database;
 use stellarroute_indexer::horizon::HorizonClient;
 use stellarroute_indexer::models::asset::Asset;
+use tracing::debug;
 
 #[tokio::test]
 #[ignore] // Requires database and Horizon API
@@ -38,7 +39,7 @@ async fn test_horizon_client_get_offers() {
     assert!(offers.is_ok());
     if let Ok(offers) = offers {
         // May be empty, but should be a valid response
-        println!("Fetched {} offers", offers.len());
+        debug!(count = offers.len(), "Fetched offers");
     }
 }
 

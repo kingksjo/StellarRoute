@@ -2,18 +2,13 @@
 
 use sqlx::postgres::PgPoolOptions;
 use std::time::Duration;
-use stellarroute_api::{Server, ServerConfig};
+use stellarroute_api::{telemetry, Server, ServerConfig};
 use tracing::{error, info};
 
 #[tokio::main]
 async fn main() {
-    // Initialize tracing
-    tracing_subscriber::fmt()
-        .with_env_filter(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "stellarroute_api=debug,tower_http=debug".into()),
-        )
-        .init();
+    // Initialize structured logging (reads RUST_LOG and LOG_FORMAT env vars)
+    telemetry::init();
 
     info!("Starting StellarRoute API Server");
 

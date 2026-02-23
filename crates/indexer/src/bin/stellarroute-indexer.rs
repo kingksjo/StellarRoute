@@ -4,7 +4,6 @@
 
 use std::process;
 use tracing::{error, info};
-use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt, EnvFilter};
 
 use stellarroute_indexer::config::IndexerConfig;
 use stellarroute_indexer::db::Database;
@@ -13,11 +12,8 @@ use stellarroute_indexer::sdex::SdexIndexer;
 
 #[tokio::main]
 async fn main() {
-    // Initialize tracing
-    tracing_subscriber::registry()
-        .with(EnvFilter::from_default_env())
-        .with(tracing_subscriber::fmt::layer())
-        .init();
+    // Initialize structured logging (reads RUST_LOG and LOG_FORMAT env vars)
+    stellarroute_indexer::telemetry::init();
 
     info!("Starting StellarRoute Indexer");
 

@@ -6,9 +6,9 @@ use std::{net::SocketAddr, sync::Arc};
 use tower_http::{
     compression::CompressionLayer,
     cors::{Any, CorsLayer},
-    trace::TraceLayer,
+    trace::{DefaultMakeSpan, DefaultOnResponse, TraceLayer},
 };
-use tracing::{info, warn};
+use tracing::{info, warn, Level};
 use utoipa::OpenApi;
 use utoipa_swagger_ui::SwaggerUi;
 
@@ -135,8 +135,12 @@ impl Server {
         // Add rate limiting (innermost — runs before CORS/compression in the response path)
         app = app.layer(rate_limit);
 
-        // Add request logging (method, URI, status code, latency)
-        app = app.layer(TraceLayer::new_for_http());
+        // Add request logging — each request gets a unique span with method, URI, status, and latency
+        app = app.layer(
+            TraceLayer::new_for_http()
+                .make_span_with(DefaultMakeSpan::new().level(Level::INFO))
+                .on_response(DefaultOnResponse::new().level(Level::INFO)),
+        );
 
         app
     }

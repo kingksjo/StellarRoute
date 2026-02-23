@@ -11,6 +11,7 @@ pub mod models;
 pub mod routes;
 pub mod server;
 pub mod state;
+pub mod telemetry;
 
 pub use cache::CacheManager;
 pub use docs::ApiDoc;
