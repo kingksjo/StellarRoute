@@ -17,7 +17,7 @@ pub enum PoolType {
 }
 
 #[contracttype]
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct RouteHop {
     pub source: Asset,
     pub destination: Asset,
@@ -26,7 +26,7 @@ pub struct RouteHop {
 }
 
 #[contracttype]
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Route {
     pub hops: Vec<RouteHop>,
     pub estimated_output: i128,
@@ -44,7 +44,7 @@ pub struct SwapParams {
 }
 
 #[contracttype]
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct QuoteResult {
     pub expected_output: i128,
     pub price_impact_bps: u32, // 100 = 1%
@@ -54,7 +54,7 @@ pub struct QuoteResult {
 }
 
 #[contracttype]
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct SwapResult {
     pub amount_in: i128,
     pub amount_out: i128,
