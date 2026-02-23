@@ -15,6 +15,26 @@ pub struct IndexerConfig {
     /// Max records to request per page (Horizon supports `limit`).
     #[serde(default = "default_horizon_limit")]
     pub horizon_limit: u32,
+
+    /// Maximum number of connections in the pool (env: `DB_MAX_CONNECTIONS`).
+    #[serde(default = "default_max_connections")]
+    pub max_connections: u32,
+
+    /// Minimum number of idle connections maintained in the pool (env: `DB_MIN_CONNECTIONS`).
+    #[serde(default = "default_min_connections")]
+    pub min_connections: u32,
+
+    /// Timeout in seconds to wait for a connection from the pool (env: `DB_CONNECTION_TIMEOUT`).
+    #[serde(default = "default_connection_timeout_secs")]
+    pub connection_timeout_secs: u64,
+
+    /// Idle connection timeout in seconds before it is closed (env: `DB_IDLE_TIMEOUT`).
+    #[serde(default = "default_idle_timeout_secs")]
+    pub idle_timeout_secs: u64,
+
+    /// Maximum lifetime of a pooled connection in seconds (env: `DB_MAX_LIFETIME`).
+    #[serde(default = "default_max_lifetime_secs")]
+    pub max_lifetime_secs: u64,
 }
 
 fn default_poll_interval_secs() -> u64 {
@@ -23,6 +43,26 @@ fn default_poll_interval_secs() -> u64 {
 
 fn default_horizon_limit() -> u32 {
     200
+}
+
+fn default_max_connections() -> u32 {
+    10
+}
+
+fn default_min_connections() -> u32 {
+    2
+}
+
+fn default_connection_timeout_secs() -> u64 {
+    30
+}
+
+fn default_idle_timeout_secs() -> u64 {
+    600
+}
+
+fn default_max_lifetime_secs() -> u64 {
+    1800
 }
 
 impl IndexerConfig {
