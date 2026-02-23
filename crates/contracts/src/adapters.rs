@@ -12,7 +12,7 @@ pub trait PoolAdapterTrait {
     ) -> i128;
 
     // Preview the output (used by get_quote)
-    fn get_quote(e: Env, input_asset: Address, output_asset: Address, amount_in: i128) -> i128;
+    fn preview_quote(e: Env, input_asset: Address, output_asset: Address, amount_in: i128) -> i128;
 
     // Fetch liquidity depth
     fn get_reserves(e: Env) -> (i128, i128);

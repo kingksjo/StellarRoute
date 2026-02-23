@@ -33,7 +33,7 @@ impl PoolAdapterTrait for ConstantProductAdapter {
         out
     }
 
-    fn get_quote(
+    fn preview_quote(
         e: Env,
         _input_asset: Address,  // Added underscore
         _output_asset: Address, // Added underscore
