@@ -13,8 +13,6 @@ use soroban_sdk::{
     contract, contractimpl, symbol_short, vec, Address, Bytes, BytesN, Env, IntoVal, Symbol, Vec,
 };
 
-const CONTRACT_VERSION: u32 = 2;
-
 #[contract]
 pub struct StellarRoute;
 

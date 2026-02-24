@@ -50,8 +50,6 @@ pub enum StorageKey {
 const DAY_IN_LEDGERS: u32 = 17280;
 const INSTANCE_BUMP_AMOUNT: u32 = 7 * DAY_IN_LEDGERS;
 const INSTANCE_LIFETIME_THRESHOLD: u32 = DAY_IN_LEDGERS;
-const TEMP_BUMP_AMOUNT: u32 = DAY_IN_LEDGERS;
-const TEMP_LIFETIME_THRESHOLD: u32 = DAY_IN_LEDGERS / 2;
 
 pub fn extend_instance_ttl(e: &Env) {
     e.storage()
