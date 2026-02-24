@@ -1,7 +1,7 @@
 use soroban_sdk::contracterror;
 
 #[contracterror]
-#[derive(Copy, Clone, Debug, Eq, PartialEq)] // <--- ADD THIS LINE
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 #[repr(u32)]
 pub enum ContractError {
     NotInitialized = 1,
@@ -16,8 +16,12 @@ pub enum ContractError {
     InsufficientOutput = 21,
     SlippageExceeded = 22,
     DeadlineExceeded = 23,
+    ExecutionTooEarly = 24,
+    PriceImpactTooHigh = 25,
+    SpreadTooHigh = 26,
     PoolNotSupported = 30,
     PoolCallFailed = 31,
+    ReserveManipulationDetected = 32,
     InvalidAmount = 40,
     Overflow = 41,
     // ── Multi-sig governance ─────────────────────────────────────────────────
@@ -54,4 +58,9 @@ pub enum ContractError {
     TokenInUse = 82,
     /// Batch add exceeds the 10-token-per-call limit.
     BatchTooLarge = 83,
+    CommitmentRequired = 50,
+    CommitmentNotFound = 51,
+    CommitmentExpired = 52,
+    InvalidReveal = 53,
+    RateLimitExceeded = 60,
 }

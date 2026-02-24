@@ -128,3 +128,47 @@ pub fn token_updated(e: &Env, asset: crate::types::Asset, updated_by: Address) {
     let topics = (Symbol::new(e, "StellarRoute"), symbol_short!("tok_upd"));
     e.events().publish(topics, (asset, updated_by));
 }
+// --- MEV Protection Events ---
+
+pub fn high_impact_swap(e: &Env, sender: Address, impact_bps: u32, amount_in: i128) {
+    let topics = (
+        Symbol::new(e, "StellarRoute"),
+        symbol_short!("hi_imp"),
+        sender,
+    );
+    e.events().publish(topics, (impact_bps, amount_in));
+}
+
+pub fn rate_limit_hit(e: &Env, sender: Address, swap_count: u32, window: u32) {
+    let topics = (
+        Symbol::new(e, "StellarRoute"),
+        symbol_short!("rl_hit"),
+        sender,
+    );
+    e.events().publish(topics, (swap_count, window));
+}
+
+pub fn commitment_created(
+    e: &Env,
+    sender: Address,
+    commitment_hash: BytesN<32>,
+    deposit_amount: i128,
+) {
+    let topics = (
+        Symbol::new(e, "StellarRoute"),
+        symbol_short!("cmt_new"),
+        sender,
+    );
+    e.events()
+        .publish(topics, (commitment_hash, deposit_amount));
+}
+
+pub fn commitment_revealed(e: &Env, sender: Address, commitment_hash: BytesN<32>) {
+    let topics = (
+        Symbol::new(e, "StellarRoute"),
+        symbol_short!("cmt_rev"),
+        sender,
+    );
+    e.events().publish(topics, commitment_hash);
+}
+
