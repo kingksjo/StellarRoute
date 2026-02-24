@@ -3,10 +3,14 @@
 import React, { useCallback, useMemo, useState } from 'react';
 import { ArrowDownUp, Settings } from 'lucide-react';
 import { usePairs, useQuote } from '@/hooks/useApi';
+import { useTradeSettings } from '@/hooks/useTradeSettings';
+import { getPriceImpactSeverity } from '@/lib/trade-utils';
 import { SwapInputBox } from './SwapInputBox';
 import { TokenSelectorModal } from './TokenSelectorModal';
 import { PriceDetailsPanel } from './PriceDetailsPanel';
 import { SwapSubmitButton, type SwapButtonState } from './SwapSubmitButton';
+import { SettingsModal } from './SettingsModal';
+import { HighImpactModal } from './HighImpactModal';
 
 export function SwapInterface() {
     // ── Token selection state ───────────────────────────────────────────
@@ -14,7 +18,19 @@ export function SwapInterface() {
     const [toAsset, setToAsset] = useState({ code: 'USDC', id: 'USDC' });
     const [fromAmount, setFromAmount] = useState('');
     const [selectorOpen, setSelectorOpen] = useState<'from' | 'to' | null>(null);
+    const [settingsOpen, setSettingsOpen] = useState(false);
+    const [highImpactOpen, setHighImpactOpen] = useState(false);
     const [isConnected] = useState(false); // Wallet stub
+
+    // ── Trade settings (persisted) ──────────────────────────────────────
+    const {
+        slippage,
+        setSlippage,
+        deadline,
+        setDeadline,
+        reset: resetSettings,
+        slippageWarning,
+    } = useTradeSettings();
 
     // ── Data fetching ───────────────────────────────────────────────────
     const { data: pairs, loading: pairsLoading } = usePairs();
@@ -24,10 +40,11 @@ export function SwapInterface() {
         return isNaN(n) || n <= 0 ? undefined : n;
     }, [fromAmount]);
 
-    const {
-        data: quote,
-        loading: quoteLoading,
-    } = useQuote(fromAsset.id, toAsset.id, parsedAmount);
+    const { data: quote, loading: quoteLoading } = useQuote(
+        fromAsset.id,
+        toAsset.id,
+        parsedAmount,
+    );
 
     // ── Derived values ──────────────────────────────────────────────────
     const toAmount = useMemo(() => {
@@ -35,13 +52,24 @@ export function SwapInterface() {
         return quote.total;
     }, [quote]);
 
+    const priceImpactPct = useMemo(() => {
+        if (!quote) return 0;
+        return quote.path.length > 1 ? 0.3 * quote.path.length : 0.1;
+    }, [quote]);
+
+    const impact = useMemo(
+        () => getPriceImpactSeverity(priceImpactPct),
+        [priceImpactPct],
+    );
+
     // ── Button state machine ────────────────────────────────────────────
     const buttonState: SwapButtonState = useMemo(() => {
         if (!isConnected) return 'connect-wallet';
         if (!fromAmount || parseFloat(fromAmount) <= 0) return 'enter-amount';
         if (quoteLoading) return 'loading-quote';
+        if (priceImpactPct > 5) return 'price-impact-high';
         return 'ready';
-    }, [isConnected, fromAmount, quoteLoading]);
+    }, [isConnected, fromAmount, quoteLoading, priceImpactPct]);
 
     // ── Handlers ────────────────────────────────────────────────────────
     const handleFlip = useCallback(() => {
@@ -62,17 +90,31 @@ export function SwapInterface() {
         [selectorOpen],
     );
 
+    const executeSwap = useCallback(() => {
+        console.log('Execute swap:', {
+            fromAsset,
+            toAsset,
+            fromAmount,
+            quote,
+            slippage,
+            deadline,
+        });
+        setHighImpactOpen(false);
+    }, [fromAsset, toAsset, fromAmount, quote, slippage, deadline]);
+
     const handleSwapClick = useCallback(() => {
         if (buttonState === 'connect-wallet') {
-            // TODO: Trigger wallet connection flow
             console.log('Wallet connect triggered');
             return;
         }
-        if (buttonState === 'ready') {
-            // TODO: Execute swap transaction
-            console.log('Execute swap:', { fromAsset, toAsset, fromAmount, quote });
+        if (buttonState === 'price-impact-high') {
+            setHighImpactOpen(true);
+            return;
         }
-    }, [buttonState, fromAsset, toAsset, fromAmount, quote]);
+        if (buttonState === 'ready') {
+            executeSwap();
+        }
+    }, [buttonState, executeSwap]);
 
     return (
         <div className="w-full max-w-[480px] mx-auto">
@@ -84,8 +126,24 @@ export function SwapInterface() {
 
                 {/* Header */}
                 <div className="relative flex items-center justify-between px-5 pt-5 pb-2">
-                    <h2 className="text-lg font-semibold text-white">Swap</h2>
-                    <button className="p-2 rounded-xl hover:bg-white/[0.06] transition-colors">
+                    <div className="flex items-center gap-3">
+                        <h2 className="text-lg font-semibold text-white">Swap</h2>
+                        {/* Slippage indicator */}
+                        <span
+                            className={`text-[11px] px-2 py-0.5 rounded-full ${slippageWarning === 'high'
+                                    ? 'bg-red-500/10 text-red-400'
+                                    : slippageWarning === 'low'
+                                        ? 'bg-yellow-500/10 text-yellow-400'
+                                        : 'bg-white/[0.04] text-white/30'
+                                }`}
+                        >
+                            {slippage}% slippage
+                        </span>
+                    </div>
+                    <button
+                        onClick={() => setSettingsOpen(true)}
+                        className="p-2 rounded-xl hover:bg-white/[0.06] transition-colors"
+                    >
                         <Settings className="w-5 h-5 text-white/40" />
                     </button>
                 </div>
@@ -101,9 +159,7 @@ export function SwapInterface() {
                         onTokenClick={() => setSelectorOpen('from')}
                         balance={isConnected ? '1,234.56' : undefined}
                         onMaxClick={
-                            isConnected
-                                ? () => setFromAmount('1234.56')
-                                : undefined
+                            isConnected ? () => setFromAmount('1234.56') : undefined
                         }
                     />
 
@@ -127,11 +183,25 @@ export function SwapInterface() {
                         loading={quoteLoading && !!parsedAmount}
                     />
 
+                    {/* Price impact badge (always visible when quote is available) */}
+                    {quote && parsedAmount && (
+                        <div className="flex items-center justify-between px-1 pt-1">
+                            <span className="text-xs text-white/30">Price Impact</span>
+                            <span
+                                className={`text-xs font-semibold px-2 py-0.5 rounded-full ${impact.color} ${impact.bgColor}`}
+                                title={`Price impact: ${priceImpactPct.toFixed(2)}% (${impact.label})`}
+                            >
+                                {priceImpactPct.toFixed(2)}%
+                            </span>
+                        </div>
+                    )}
+
                     {/* Price Details */}
-                    <div className="pt-2">
+                    <div className="pt-1">
                         <PriceDetailsPanel
                             quote={quote}
                             loading={quoteLoading && !!parsedAmount}
+                            slippage={slippage}
                         />
                     </div>
 
@@ -140,12 +210,13 @@ export function SwapInterface() {
                         <SwapSubmitButton
                             state={buttonState}
                             onClick={handleSwapClick}
+                            priceImpactPct={priceImpactPct}
                         />
                     </div>
                 </div>
             </div>
 
-            {/* Token Selector Modal */}
+            {/* Modals */}
             <TokenSelectorModal
                 isOpen={selectorOpen !== null}
                 onClose={() => setSelectorOpen(null)}
@@ -153,6 +224,30 @@ export function SwapInterface() {
                 pairs={pairs ?? []}
                 loading={pairsLoading}
                 side={selectorOpen === 'from' ? 'base' : 'counter'}
+            />
+
+            <SettingsModal
+                isOpen={settingsOpen}
+                onClose={() => setSettingsOpen(false)}
+                slippage={slippage}
+                onSlippageChange={setSlippage}
+                deadline={deadline}
+                onDeadlineChange={setDeadline}
+                onReset={resetSettings}
+                slippageWarning={slippageWarning}
+                expectedOutput={toAmount}
+                outputTokenCode={toAsset.code}
+            />
+
+            <HighImpactModal
+                isOpen={highImpactOpen}
+                onClose={() => setHighImpactOpen(false)}
+                onConfirm={executeSwap}
+                priceImpactPct={priceImpactPct}
+                fromAmount={fromAmount}
+                fromToken={fromAsset.code}
+                toAmount={toAmount}
+                toToken={toAsset.code}
             />
         </div>
     );
