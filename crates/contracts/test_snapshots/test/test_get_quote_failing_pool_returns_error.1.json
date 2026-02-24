@@ -291,7 +291,12 @@
                 },
                 {
                   "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4"
-                }
+                },
+                "void",
+                "void",
+                "void",
+                "void",
+                "void"
               ]
             }
           }
@@ -606,7 +611,7 @@
             "data": {
               "vec": [
                 {
-                  "string": "caught panic 'mock: pool unavailable' from contract function 'Symbol(obj#113)'"
+                  "string": "caught panic 'mock: pool unavailable' from contract function 'Symbol(obj#135)'"
                 },
                 {
                   "vec": [

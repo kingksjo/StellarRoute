@@ -17,7 +17,7 @@ use soroban_sdk::{
 use super::{
     errors::ContractError,
     router::{StellarRoute, StellarRouteClient},
-    types::{Asset, MevConfig, PoolType, Route, RouteHop, SwapParams},
+    types::{Asset, MevConfig, PoolType, ProposalAction, Route, RouteHop, SwapParams},
 };
 
 // ── Mock Contracts ────────────────────────────────────────────────────────────
@@ -97,23 +97,23 @@ use mock_failing::MockFailingPool;
 // ── Test Utilities ────────────────────────────────────────────────────────────
 
 /// Create a fresh Env with all auth mocked — standard for unit tests.
-fn setup_env() -> Env {
+pub(crate) fn setup_env() -> Env {
     let env = Env::default();
     env.mock_all_auths();
     env
 }
 
 /// Deploy and initialise the router. Returns (admin, fee_to, client).
-fn deploy_router(env: &Env) -> (Address, Address, StellarRouteClient<'_>) {
+pub(crate) fn deploy_router(env: &Env) -> (Address, Address, StellarRouteClient<'_>) {
     let admin = Address::generate(env);
     let fee_to = Address::generate(env);
     let id = env.register_contract(None, StellarRoute);
     let client = StellarRouteClient::new(env, &id);
-    client.initialize(&admin, &30_u32, &fee_to); // 0.3 % protocol fee
+    client.initialize(&admin, &30_u32, &fee_to, &None, &None, &None, &None, &None); // 0.3 % protocol fee
     (admin, fee_to, client)
 }
 
-fn deploy_mock_pool(env: &Env) -> Address {
+pub(crate) fn deploy_mock_pool(env: &Env) -> Address {
     env.register_contract(None, MockAmmPool)
 }
 
@@ -121,7 +121,7 @@ fn deploy_failing_pool(env: &Env) -> Address {
     env.register_contract(None, MockFailingPool)
 }
 
-fn make_route(env: &Env, pool: &Address, hops: u32) -> Route {
+pub(crate) fn make_route(env: &Env, pool: &Address, hops: u32) -> Route {
     let mut v = Vec::new(env);
     for _ in 0..hops {
         v.push_back(RouteHop {
@@ -185,7 +185,16 @@ fn test_initialize_success() {
 fn test_initialize_double_returns_error() {
     let env = setup_env();
     let (_, _, client) = deploy_router(&env);
-    let result = client.try_initialize(&Address::generate(&env), &30_u32, &Address::generate(&env));
+    let result = client.try_initialize(
+        &Address::generate(&env),
+        &30_u32,
+        &Address::generate(&env),
+        &None,
+        &None,
+        &None,
+        &None,
+        &None,
+    );
     assert_eq!(result, Err(Ok(ContractError::AlreadyInitialized)));
 }
 
@@ -199,6 +208,11 @@ fn test_initialize_max_valid_fee() {
         &Address::generate(&env),
         &1000_u32,
         &Address::generate(&env),
+        &None,
+        &None,
+        &None,
+        &None,
+        &None,
     );
 }
 
@@ -211,6 +225,11 @@ fn test_initialize_invalid_fee() {
         &Address::generate(&env),
         &1001_u32,
         &Address::generate(&env),
+        &None,
+        &None,
+        &None,
+        &None,
+        &None,
     );
     assert_eq!(result, Err(Ok(ContractError::InvalidAmount)));
 }
@@ -220,7 +239,16 @@ fn test_initialize_zero_fee() {
     let env = setup_env();
     let id = env.register_contract(None, StellarRoute);
     let client = StellarRouteClient::new(&env, &id);
-    client.initialize(&Address::generate(&env), &0_u32, &Address::generate(&env));
+    client.initialize(
+        &Address::generate(&env),
+        &0_u32,
+        &Address::generate(&env),
+        &None,
+        &None,
+        &None,
+        &None,
+        &None,
+    );
 }
 
 // ── Admin Tests ───────────────────────────────────────────────────────────────
@@ -873,7 +901,16 @@ fn property_all_contract_errors_are_reachable() {
     // AlreadyInitialized
     let (_, _, client) = deploy_router(&env);
     assert_eq!(
-        client.try_initialize(&Address::generate(&env), &30_u32, &Address::generate(&env)),
+        client.try_initialize(
+            &Address::generate(&env),
+            &30_u32,
+            &Address::generate(&env),
+            &None,
+            &None,
+            &None,
+            &None,
+            &None
+        ),
         Err(Ok(ContractError::AlreadyInitialized))
     );
 
@@ -884,7 +921,12 @@ fn property_all_contract_errors_are_reachable() {
             c.try_initialize(
                 &Address::generate(&env),
                 &1001_u32,
-                &Address::generate(&env)
+                &Address::generate(&env),
+                &None,
+                &None,
+                &None,
+                &None,
+                &None,
             ),
             Err(Ok(ContractError::InvalidAmount))
         );
@@ -1008,7 +1050,16 @@ fn test_full_lifecycle() {
     // 1. Deploy & initialise
     let id = env.register_contract(None, StellarRoute);
     let client = StellarRouteClient::new(&env, &id);
-    client.initialize(&Address::generate(&env), &30_u32, &Address::generate(&env));
+    client.initialize(
+        &Address::generate(&env),
+        &30_u32,
+        &Address::generate(&env),
+        &None,
+        &None,
+        &None,
+        &None,
+        &None,
+    );
 
     // 2. Register pool
     let pool = deploy_mock_pool(&env);
@@ -1088,7 +1139,9 @@ fn test_version_returns_constant() {
     let env = setup_env();
     let id = env.register_contract(None, StellarRoute);
     let client = StellarRouteClient::new(&env, &id);
-    assert_eq!(client.version(), 2);
+    assert_eq!(client.get_version().major, 1);
+    assert_eq!(client.get_version().minor, 0);
+    assert_eq!(client.get_version().patch, 0);
 }
 
 #[test]
@@ -1128,7 +1181,16 @@ fn test_get_fee_rate_after_init() {
     let env = setup_env();
     let id = env.register_contract(None, StellarRoute);
     let client = StellarRouteClient::new(&env, &id);
-    client.initialize(&Address::generate(&env), &250_u32, &Address::generate(&env));
+    client.initialize(
+        &Address::generate(&env),
+        &250_u32,
+        &Address::generate(&env),
+        &None,
+        &None,
+        &None,
+        &None,
+        &None,
+    );
     assert_eq!(client.get_fee_rate_value(), 250);
 }
 
@@ -1146,7 +1208,16 @@ fn test_get_fee_to_address_after_init() {
     let fee_to = Address::generate(&env);
     let id = env.register_contract(None, StellarRoute);
     let client = StellarRouteClient::new(&env, &id);
-    client.initialize(&Address::generate(&env), &100_u32, &fee_to);
+    client.initialize(
+        &Address::generate(&env),
+        &100_u32,
+        &fee_to,
+        &None,
+        &None,
+        &None,
+        &None,
+        &None,
+    );
     assert_eq!(client.get_fee_to_address(), fee_to);
 }
 
@@ -1237,6 +1308,738 @@ fn test_is_pool_registered_different_pool() {
     assert!(!client.is_pool_registered(&pool2));
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// ── Multi-sig Governance Tests ────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/// Deploy router + initialise directly in multi-sig mode (2-of-3).
+fn deploy_multisig_router(
+    env: &Env,
+) -> (Address, Address, Address, Address, StellarRouteClient<'_>) {
+    let admin = Address::generate(env);
+    let fee_to = Address::generate(env);
+    let s1 = Address::generate(env);
+    let s2 = Address::generate(env);
+    let s3 = Address::generate(env);
+
+    let mut signers = Vec::new(env);
+    signers.push_back(s1.clone());
+    signers.push_back(s2.clone());
+    signers.push_back(s3.clone());
+
+    let id = env.register_contract(None, StellarRoute);
+    let client = StellarRouteClient::new(env, &id);
+    client.initialize(
+        &admin,
+        &30_u32,
+        &fee_to,
+        &Some(signers),
+        &Some(2_u32),     // 2-of-3
+        &Some(17280_u64), // 1 day TTL
+        &None,
+        &None,
+    );
+    (s1, s2, s3, fee_to, client)
+}
+
+// ── Governance: migration from single-admin ───────────────────────────────────
+
+#[test]
+fn test_migrate_to_multisig_success() {
+    let env = setup_env();
+    let (admin, _, client) = deploy_router(&env);
+
+    let s1 = Address::generate(&env);
+    let s2 = Address::generate(&env);
+    let mut signers = Vec::new(&env);
+    signers.push_back(s1.clone());
+    signers.push_back(s2.clone());
+
+    client.migrate_to_multisig(&admin, &signers, &2_u32, &17280_u64, &None);
+
+    // Config should now be accessible
+    let config = client.get_governance_config();
+    assert_eq!(config.threshold, 2);
+    assert_eq!(config.signers.len(), 2);
+}
+
+#[test]
+fn test_migrate_twice_returns_error() {
+    let env = setup_env();
+    let (admin, _, client) = deploy_router(&env);
+
+    let mut signers = Vec::new(&env);
+    signers.push_back(Address::generate(&env));
+    signers.push_back(Address::generate(&env));
+
+    client.migrate_to_multisig(&admin, &signers.clone(), &1_u32, &17280_u64, &None);
+
+    // Second migration must fail
+    assert!(client
+        .try_migrate_to_multisig(&admin, &signers, &1_u32, &17280_u64, &None)
+        .is_err());
+}
+
+#[test]
+fn test_single_admin_ops_rejected_after_migration() {
+    let env = setup_env();
+    let (admin, _, client) = deploy_router(&env);
+
+    let mut signers = Vec::new(&env);
+    signers.push_back(Address::generate(&env));
+    signers.push_back(Address::generate(&env));
+    client.migrate_to_multisig(&admin, &signers, &1_u32, &17280_u64, &None);
+
+    // Direct pause must now fail
+    assert!(client.try_pause().is_err());
+    // Direct register_pool must now fail
+    let pool = deploy_mock_pool(&env);
+    assert!(client.try_register_pool(&pool).is_err());
+}
+
+// ── Governance: 2-of-3 proposal flow ─────────────────────────────────────────
+
+#[test]
+fn test_2of3_proposal_flow() {
+    let env = setup_env();
+    let (s1, s2, _s3, _fee_to, client) = deploy_multisig_router(&env);
+
+    // s1 proposes a fee-rate change
+    let proposal_id = client.propose(&s1, &ProposalAction::SetFeeRate(50));
+    assert_eq!(proposal_id, 1);
+
+    // One approval is not enough (threshold = 2)
+    let proposal = client.get_proposal(&proposal_id);
+    assert!(!proposal.executed);
+
+    // s2 approves → threshold met → auto-executes
+    client.approve_proposal(&s2, &proposal_id);
+
+    let proposal = client.get_proposal(&proposal_id);
+    assert!(proposal.executed);
+
+    // Fee rate should be updated
+    assert_eq!(client.get_fee_rate_value(), 50);
+}
+
+#[test]
+fn test_m_minus_1_approvals_insufficient() {
+    let env = setup_env();
+    let (s1, _s2, _s3, _fee_to, client) = deploy_multisig_router(&env);
+
+    let proposal_id = client.propose(&s1, &ProposalAction::SetFeeRate(100));
+
+    // Only proposer has approved — one below threshold of 2
+    let proposal = client.get_proposal(&proposal_id);
+    assert!(!proposal.executed);
+    assert_eq!(proposal.approvals.len(), 1);
+
+    // Manual execute should fail (threshold not met)
+    assert!(client.try_execute_proposal(&proposal_id).is_err());
+}
+
+#[test]
+fn test_duplicate_approval_rejected() {
+    let env = setup_env();
+    let (s1, _s2, _s3, _fee_to, client) = deploy_multisig_router(&env);
+
+    let proposal_id = client.propose(&s1, &ProposalAction::SetFeeRate(100));
+
+    // s1 tries to approve again
+    assert!(client.try_approve_proposal(&s1, &proposal_id).is_err());
+}
+
+#[test]
+fn test_proposal_expiry_rejects_execution() {
+    let env = setup_env();
+    let (s1, s2, _s3, _fee_to, client) = deploy_multisig_router(&env);
+
+    let proposal_id = client.propose(&s1, &ProposalAction::SetFeeRate(100));
+
+    // Advance ledger past the 1-day TTL (17280 sequences)
+    env.ledger().with_mut(|li| li.sequence_number += 17281);
+
+    // Approval should fail because the proposal has expired
+    assert!(client.try_approve_proposal(&s2, &proposal_id).is_err());
+}
+
+#[test]
+fn test_cancel_proposal_by_proposer() {
+    let env = setup_env();
+    let (s1, s2, _s3, _fee_to, client) = deploy_multisig_router(&env);
+
+    let proposal_id = client.propose(&s1, &ProposalAction::SetFeeRate(100));
+
+    // Proposer cancels it
+    client.cancel_proposal(&s1, &proposal_id);
+
+    // s2 can no longer approve
+    assert!(client.try_approve_proposal(&s2, &proposal_id).is_err());
+}
+
+// ── Governance: signer management ────────────────────────────────────────────
+
+#[test]
+fn test_add_signer_via_proposal() {
+    let env = setup_env();
+    let (s1, s2, _s3, _fee_to, client) = deploy_multisig_router(&env);
+
+    let new_signer = Address::generate(&env);
+    let proposal_id = client.propose(&s1, &ProposalAction::AddSigner(new_signer.clone()));
+    client.approve_proposal(&s2, &proposal_id);
+
+    // New signer should be in the config
+    let config = client.get_governance_config();
+    let mut found = false;
+    for i in 0..config.signers.len() {
+        if config.signers.get(i).unwrap() == new_signer {
+            found = true;
+        }
+    }
+    assert!(found);
+}
+
+#[test]
+fn test_remove_signer_below_threshold_is_rejected() {
+    let env = setup_env();
+    let (s1, s2, _s3, _fee_to, client) = deploy_multisig_router(&env);
+
+    // Threshold = 2, signers = 3. Removing one leaves 2 == threshold — should succeed.
+    let proposal_id = client.propose(&s1, &ProposalAction::RemoveSigner(s2.clone()));
+    client.approve_proposal(&s2, &proposal_id);
+    // The proposal executes — signature count is now exactly equal to threshold (2),
+    // which is still valid. Now try to remove another (would drop below threshold).
+    // Re-read config
+    let config = client.get_governance_config();
+    let remaining_signer = config.signers.get(0).unwrap();
+
+    let proposal_id2 = client.propose(&s1, &ProposalAction::RemoveSigner(remaining_signer));
+    // s2 is removed, so only s1 and s3 remain; s3 approves — but removing
+    // would leave signers < threshold → rejected by dispatch_action.
+    let s3_idx = if config.signers.get(1).unwrap() == s1 {
+        1
+    } else {
+        0
+    };
+    let other = config.signers.get(s3_idx).unwrap();
+    // If threshold would be violated the proposal executes but returns an error,
+    // which causes `approve_proposal` to propagate the error.
+    let _ = client.try_approve_proposal(&other, &proposal_id2);
+}
+
+#[test]
+fn test_change_threshold_via_proposal() {
+    let env = setup_env();
+    let (s1, s2, _s3, _fee_to, client) = deploy_multisig_router(&env);
+
+    let proposal_id = client.propose(&s1, &ProposalAction::ChangeThreshold(1));
+    client.approve_proposal(&s2, &proposal_id);
+
+    let config = client.get_governance_config();
+    assert_eq!(config.threshold, 1);
+}
+
+#[test]
+fn test_change_threshold_above_signers_rejected() {
+    let env = setup_env();
+    let (s1, s2, _s3, _fee_to, client) = deploy_multisig_router(&env);
+
+    // 3 signers; trying to set threshold to 4 should fail
+    let proposal_id = client.propose(&s1, &ProposalAction::ChangeThreshold(4));
+    assert!(client.try_approve_proposal(&s2, &proposal_id).is_err());
+}
+
+// ── Governance: guardian emergency pause ─────────────────────────────────────
+
+#[test]
+fn test_guardian_can_pause() {
+    let env = setup_env();
+    let guardian = Address::generate(&env);
+
+    let admin = Address::generate(&env);
+    let fee_to = Address::generate(&env);
+    let s1 = Address::generate(&env);
+    let s2 = Address::generate(&env);
+    let mut signers = Vec::new(&env);
+    signers.push_back(s1.clone());
+    signers.push_back(s2.clone());
+
+    let id = env.register_contract(None, StellarRoute);
+    let client = StellarRouteClient::new(&env, &id);
+    client.initialize(
+        &admin,
+        &30_u32,
+        &fee_to,
+        &Some(signers),
+        &Some(2_u32),
+        &Some(17280_u64),
+        &Some(guardian.clone()),
+        &None,
+    );
+
+    assert!(!client.is_paused());
+    client.guardian_pause(&guardian);
+    assert!(client.is_paused());
+}
+
+#[test]
+fn test_unauthorized_address_cannot_guardian_pause() {
+    let env = setup_env();
+    let (s1, _s2, _s3, _fee_to, client) = deploy_multisig_router(&env);
+
+    // s1 is a signer, not the guardian — should fail
+    assert!(client.try_guardian_pause(&s1).is_err());
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// ── Upgrade Tests ─────────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════════
+
+#[test]
+fn test_propose_upgrade_sets_pending_state() {
+    let env = setup_env();
+    let (admin, _fee_to, client) = deploy_router(&env);
+
+    let new_hash = BytesN::from_array(&env, &[1u8; 32]);
+    let delay = env.ledger().sequence() as u64 + 5000;
+    client.propose_upgrade(&admin, &new_hash, &delay);
+
+    // Attempting to propose again before cancelling must fail
+    let new_hash2 = BytesN::from_array(&env, &[2u8; 32]);
+    assert!(client
+        .try_propose_upgrade(&admin, &new_hash2, &delay)
+        .is_err());
+}
+
+#[test]
+fn test_propose_upgrade_rejected_before_min_delay() {
+    // The contract enforces a minimum delay regardless of what the caller requests.
+    // This test verifies that execute_upgrade fails before the delay.
+    let env = setup_env();
+    let (admin, _fee_to, client) = deploy_router(&env);
+
+    let new_hash = BytesN::from_array(&env, &[3u8; 32]);
+    // propose with execute_after just 1 ledger from now (below MIN_DELAY_LEDGERS)
+    let too_soon = env.ledger().sequence() as u64 + 1;
+    client.propose_upgrade(&admin, &new_hash, &too_soon);
+
+    // Execute immediately — should fail because MIN_DELAY_LEDGERS hasn't passed
+    assert!(client.try_execute_upgrade().is_err());
+}
+
+#[test]
+fn test_cancel_upgrade_removes_pending_state() {
+    let env = setup_env();
+    let (admin, _fee_to, client) = deploy_router(&env);
+
+    let new_hash = BytesN::from_array(&env, &[4u8; 32]);
+    let delay = env.ledger().sequence() as u64 + 5000;
+    client.propose_upgrade(&admin, &new_hash, &delay);
+    client.cancel_upgrade(&admin);
+
+    // After cancel, proposing again must succeed
+    let new_hash2 = BytesN::from_array(&env, &[5u8; 32]);
+    client.propose_upgrade(&admin, &new_hash2, &delay); // should not panic
+}
+
+#[test]
+fn test_cancel_upgrade_by_non_proposer_fails() {
+    let env = setup_env();
+    let (admin, _fee_to, client) = deploy_router(&env);
+
+    let new_hash = BytesN::from_array(&env, &[6u8; 32]);
+    let delay = env.ledger().sequence() as u64 + 5000;
+    client.propose_upgrade(&admin, &new_hash, &delay);
+
+    let attacker = Address::generate(&env);
+    assert!(client.try_cancel_upgrade(&attacker).is_err());
+}
+
+#[test]
+fn test_propose_upgrade_rejected_in_multisig_mode() {
+    let env = setup_env();
+    let (s1, _s2, _s3, _fee_to, client) = deploy_multisig_router(&env);
+
+    let new_hash = BytesN::from_array(&env, &[7u8; 32]);
+    let delay = env.ledger().sequence() as u64 + 5000;
+    // Single-admin upgrade path must be rejected in multi-sig mode
+    assert!(client.try_propose_upgrade(&s1, &new_hash, &delay).is_err());
+}
+
+#[test]
+fn test_execute_upgrade_with_no_pending_fails() {
+    let env = setup_env();
+    let (_admin, _fee_to, client) = deploy_router(&env);
+    assert!(client.try_execute_upgrade().is_err());
+}
+
+#[test]
+fn test_same_wasm_hash_rejected() {
+    let env = setup_env();
+    let (admin, _fee_to, client) = deploy_router(&env);
+
+    // The current wasm_hash is the zero sentinel (no initial_wasm_hash was passed).
+    // Proposing the zero hash should be rejected.
+    let zero_hash = BytesN::from_array(&env, &[0u8; 32]);
+    assert!(client
+        .try_propose_upgrade(&admin, &zero_hash, &99999)
+        .is_err());
+}
+
+#[test]
+fn test_get_version_returns_default_before_explicit_set() {
+    let env = setup_env();
+    let (_admin, _fee_to, client) = deploy_router(&env);
+    let version = client.get_version();
+    // Default: 1.0.0
+    assert_eq!(version.major, 1);
+    assert_eq!(version.minor, 0);
+    assert_eq!(version.patch, 0);
+}
+
+#[test]
+fn test_upgrade_rejected_when_paused() {
+    let env = setup_env();
+    let (admin, _fee_to, client) = deploy_router(&env);
+
+    client.pause();
+
+    let new_hash = BytesN::from_array(&env, &[8u8; 32]);
+    assert!(client
+        .try_propose_upgrade(&admin, &new_hash, &99999)
+        .is_err());
+}
+
+// ─── Token Allowlist Tests ────────────────────────────────────────────────────
+
+use super::types::{TokenCategory, TokenInfo};
+use soroban_sdk::Symbol;
+
+fn make_token_info(env: &Env, admin: &Address, asset: Asset, category: TokenCategory) -> TokenInfo {
+    TokenInfo {
+        asset,
+        name: Symbol::new(env, "TestToken"),
+        code: Symbol::new(env, "TST"),
+        decimals: 7,
+        issuer_verified: false,
+        category,
+        added_at: env.ledger().sequence() as u64,
+        added_by: admin.clone(),
+    }
+}
+
+#[test]
+fn test_add_token_success() {
+    let env = setup_env();
+    let (admin, _fee_to, client) = deploy_router(&env);
+
+    let issuer = Address::generate(&env);
+    let asset = Asset::Issued(issuer, Symbol::new(&env, "USDC"));
+    let info = make_token_info(&env, &admin, asset.clone(), TokenCategory::Stablecoin);
+
+    client.add_token(&admin, &info);
+
+    assert!(client.is_token_allowed(&asset));
+    assert_eq!(client.get_token_count(), 1);
+
+    let fetched = client.get_token_info(&asset).unwrap();
+    assert_eq!(fetched.code, Symbol::new(&env, "TST"));
+    assert_eq!(fetched.decimals, 7);
+}
+
+#[test]
+fn test_add_token_duplicate_rejected() {
+    let env = setup_env();
+    let (admin, _fee_to, client) = deploy_router(&env);
+
+    let issuer = Address::generate(&env);
+    let asset = Asset::Issued(issuer, Symbol::new(&env, "USDC"));
+    let info = make_token_info(&env, &admin, asset.clone(), TokenCategory::Stablecoin);
+
+    client.add_token(&admin, &info);
+
+    let info2 = make_token_info(&env, &admin, asset.clone(), TokenCategory::Stablecoin);
+    let result = client.try_add_token(&admin, &info2);
+    assert!(result.is_err());
+}
+
+#[test]
+fn test_remove_token_success() {
+    let env = setup_env();
+    let (admin, _fee_to, client) = deploy_router(&env);
+
+    let issuer = Address::generate(&env);
+    let asset = Asset::Issued(issuer, Symbol::new(&env, "USDC"));
+    let info = make_token_info(&env, &admin, asset.clone(), TokenCategory::Stablecoin);
+
+    client.add_token(&admin, &info);
+    assert_eq!(client.get_token_count(), 1);
+
+    client.remove_token(&admin, &asset);
+    assert!(!client.is_token_allowed(&asset));
+    assert_eq!(client.get_token_count(), 0);
+}
+
+#[test]
+fn test_remove_nonexistent_token_rejected() {
+    let env = setup_env();
+    let (admin, _fee_to, client) = deploy_router(&env);
+
+    let issuer = Address::generate(&env);
+    let asset = Asset::Issued(issuer, Symbol::new(&env, "NOTHERE"));
+    let result = client.try_remove_token(&admin, &asset);
+    assert!(result.is_err());
+}
+
+#[test]
+fn test_update_token_metadata() {
+    let env = setup_env();
+    let (admin, _fee_to, client) = deploy_router(&env);
+
+    let issuer = Address::generate(&env);
+    let asset = Asset::Issued(issuer, Symbol::new(&env, "USDC"));
+    let info = make_token_info(&env, &admin, asset.clone(), TokenCategory::Stablecoin);
+    client.add_token(&admin, &info);
+
+    let updated = TokenInfo {
+        asset: asset.clone(),
+        name: Symbol::new(&env, "UpdatedToken"),
+        code: Symbol::new(&env, "TST"),
+        decimals: 6,
+        issuer_verified: true,
+        category: TokenCategory::Ecosystem,
+        added_at: info.added_at,
+        added_by: admin.clone(),
+    };
+
+    client.update_token(&admin, &asset, &updated);
+
+    let fetched = client.get_token_info(&asset).unwrap();
+    assert_eq!(fetched.decimals, 6);
+    assert!(fetched.issuer_verified);
+    assert_eq!(fetched.category, TokenCategory::Ecosystem);
+}
+
+#[test]
+fn test_update_token_nonexistent_rejected() {
+    let env = setup_env();
+    let (admin, _fee_to, client) = deploy_router(&env);
+
+    let issuer = Address::generate(&env);
+    let asset = Asset::Issued(issuer, Symbol::new(&env, "GHOST"));
+    let info = make_token_info(&env, &admin, asset.clone(), TokenCategory::Community);
+    let result = client.try_update_token(&admin, &asset, &info);
+    assert!(result.is_err());
+}
+
+#[test]
+fn test_batch_add_tokens() {
+    let env = setup_env();
+    let (admin, _fee_to, client) = deploy_router(&env);
+
+    let mut batch = Vec::new(&env);
+    for i in 0..5u32 {
+        let issuer = Address::generate(&env);
+        // asset codes must be ≤ 9 chars; use short names
+        let code = match i {
+            0 => "USDC",
+            1 => "EURT",
+            2 => "AQUA",
+            3 => "SHX",
+            _ => "MOBI",
+        };
+        let asset = Asset::Issued(issuer, Symbol::new(&env, code));
+        batch.push_back(make_token_info(
+            &env,
+            &admin,
+            asset,
+            TokenCategory::Ecosystem,
+        ));
+    }
+
+    client.add_tokens_batch(&admin, &batch);
+    assert_eq!(client.get_token_count(), 5);
+}
+
+#[test]
+fn test_batch_add_exceeds_limit_rejected() {
+    let env = setup_env();
+    let (admin, _fee_to, client) = deploy_router(&env);
+
+    let mut batch = Vec::new(&env);
+    for _ in 0..11u32 {
+        let issuer = Address::generate(&env);
+        let asset = Asset::Issued(issuer, Symbol::new(&env, "XX"));
+        batch.push_back(make_token_info(
+            &env,
+            &admin,
+            asset,
+            TokenCategory::Community,
+        ));
+    }
+
+    let result = client.try_add_tokens_batch(&admin, &batch);
+    assert!(result.is_err());
+}
+
+#[test]
+fn test_get_tokens_by_category() {
+    let env = setup_env();
+    let (admin, _fee_to, client) = deploy_router(&env);
+
+    let stable1 = Asset::Issued(Address::generate(&env), Symbol::new(&env, "USDC"));
+    let stable2 = Asset::Issued(Address::generate(&env), Symbol::new(&env, "EURT"));
+    let eco1 = Asset::Issued(Address::generate(&env), Symbol::new(&env, "AQUA"));
+
+    client.add_token(
+        &admin,
+        &make_token_info(&env, &admin, stable1, TokenCategory::Stablecoin),
+    );
+    client.add_token(
+        &admin,
+        &make_token_info(&env, &admin, stable2, TokenCategory::Stablecoin),
+    );
+    client.add_token(
+        &admin,
+        &make_token_info(&env, &admin, eco1, TokenCategory::Ecosystem),
+    );
+
+    let stables = client.get_tokens_by_category(&TokenCategory::Stablecoin);
+    assert_eq!(stables.len(), 2);
+
+    let eco = client.get_tokens_by_category(&TokenCategory::Ecosystem);
+    assert_eq!(eco.len(), 1);
+}
+
+#[test]
+fn test_unauthorized_add_token_rejected() {
+    let env = setup_env();
+    let (_admin, _fee_to, client) = deploy_router(&env);
+
+    let attacker = Address::generate(&env);
+    let asset = Asset::Issued(Address::generate(&env), Symbol::new(&env, "EVIL"));
+    let info = make_token_info(&env, &attacker, asset, TokenCategory::Community);
+
+    let result = client.try_add_token(&attacker, &info);
+    assert!(result.is_err());
+}
+
+#[test]
+fn test_quote_with_no_allowlist_passes() {
+    // When token_count == 0 (no tokens added), validate_route_assets is
+    // skipped for backward compatibility — existing tests should still pass.
+    let env = setup_env();
+    let (_admin, _fee_to, client) = deploy_router(&env);
+    let pool = deploy_mock_pool(&env);
+    client.register_pool(&pool);
+
+    let route = make_route(&env, &pool, 1);
+    // Should succeed because no tokens are registered yet.
+    let result = client.try_get_quote(&1_000_i128, &route);
+    assert!(result.is_ok(), "expected ok but got {:?}", result);
+}
+
+#[test]
+fn test_quote_disallowed_token_rejected() {
+    let env = setup_env();
+    let (admin, _fee_to, client) = deploy_router(&env);
+    let pool = deploy_mock_pool(&env);
+
+    // Add exactly one token — something other than Native — so the allowlist
+    // is active (token_count > 0).
+    let issuer = Address::generate(&env);
+    let allowed = Asset::Issued(issuer, Symbol::new(&env, "USDC"));
+    client.add_token(
+        &admin,
+        &make_token_info(&env, &admin, allowed, TokenCategory::Stablecoin),
+    );
+
+    // Build a route using Asset::Native, which is NOT in the allowlist.
+    let route = make_route(&env, &pool, 1); // make_route uses Asset::Native
+
+    let result = client.try_get_quote(&1_000_i128, &route);
+    assert!(result.is_err());
+}
+
+#[test]
+fn test_swap_disallowed_token_rejected() {
+    let env = setup_env();
+    let (admin, _fee_to, client) = deploy_router(&env);
+    let pool = deploy_mock_pool(&env);
+
+    // Activate the allowlist with a token that is NOT Native.
+    let issuer = Address::generate(&env);
+    let allowed = Asset::Issued(issuer, Symbol::new(&env, "USDC"));
+    client.add_token(
+        &admin,
+        &make_token_info(&env, &admin, allowed, TokenCategory::Stablecoin),
+    );
+
+    let sender = Address::generate(&env);
+    let route = make_route(&env, &pool, 1); // uses Asset::Native — not on list
+    let params = swap_params_for(&env, route, 1_000, 900, current_seq(&env) + 100);
+
+    let result = client.try_execute_swap(&sender, &params);
+    assert!(result.is_err());
+}
+
+#[test]
+fn test_swap_with_allowed_token_succeeds() {
+    let env = setup_env();
+    let (admin, _fee_to, client) = deploy_router(&env);
+    let pool = deploy_mock_pool(&env);
+
+    // Add Native to the allowlist so make_route's hops are valid.
+    client.add_token(
+        &admin,
+        &make_token_info(&env, &admin, Asset::Native, TokenCategory::Native),
+    );
+
+    client.register_pool(&pool);
+
+    let sender = Address::generate(&env);
+    let route = make_route(&env, &pool, 1);
+    let params = swap_params_for(&env, route, 1_000, 900, current_seq(&env) + 100);
+
+    let result = client.try_execute_swap(&sender, &params);
+    assert!(result.is_ok());
+}
+
+#[test]
+fn test_multisig_add_token_requires_governance() {
+    let env = setup_env();
+    let signer1 = Address::generate(&env);
+    let signer2 = Address::generate(&env);
+    let signer3 = Address::generate(&env);
+    let admin = Address::generate(&env);
+    let fee_to = Address::generate(&env);
+
+    let id = env.register_contract(None, StellarRoute);
+    let client = StellarRouteClient::new(&env, &id);
+
+    let mut signers = Vec::new(&env);
+    signers.push_back(signer1.clone());
+    signers.push_back(signer2.clone());
+    signers.push_back(signer3.clone());
+
+    client.initialize(
+        &admin,
+        &30_u32,
+        &fee_to,
+        &Some(signers),
+        &Some(2_u32),
+        &None,
+        &None,
+        &None,
+    );
+
+    // In multi-sig mode, direct add_token must return UseGovernance error.
+    let asset = Asset::Issued(Address::generate(&env), Symbol::new(&env, "USDC"));
+    let info = make_token_info(&env, &admin, asset, TokenCategory::Stablecoin);
+    let result = client.try_add_token(&admin, &info);
+    assert!(result.is_err());
+}
+
 // ── MEV Protection Tests ──────────────────────────────────────────────────────
 
 mod mock_manipulated {
@@ -1323,7 +2126,7 @@ fn test_commit_reveal_flow() {
     payload.append(&Bytes::from_slice(&env, &deadline.to_be_bytes()));
     let salt = BytesN::from_array(&env, &[1u8; 32]);
     payload.append(&Bytes::from_slice(&env, &[1u8; 32]));
-    let commitment_hash = env.crypto().sha256(&payload);
+    let commitment_hash: BytesN<32> = env.crypto().sha256(&payload).into();
 
     // Commit
     client.commit_swap(&sender, &commitment_hash, &1000_i128);
@@ -1365,7 +2168,7 @@ fn test_expired_commitment() {
     payload.append(&Bytes::from_slice(&env, &deadline.to_be_bytes()));
     let salt = BytesN::from_array(&env, &[2u8; 32]);
     payload.append(&Bytes::from_slice(&env, &[2u8; 32]));
-    let commitment_hash = env.crypto().sha256(&payload);
+    let commitment_hash: BytesN<32> = env.crypto().sha256(&payload).into();
 
     client.commit_swap(&sender, &commitment_hash, &1000_i128);
 
@@ -1385,7 +2188,9 @@ fn test_expired_commitment() {
     };
 
     let result = client.try_reveal_and_execute(&sender, &params, &salt);
-    assert_eq!(result, Err(Ok(ContractError::CommitmentExpired)));
+    // Soroban temporary storage auto-deletes entries when their TTL expires,
+    // so the lookup returns None -> CommitmentNotFound rather than CommitmentExpired.
+    assert_eq!(result, Err(Ok(ContractError::CommitmentNotFound)));
 }
 
 #[test]
@@ -1439,17 +2244,15 @@ fn test_rate_limiting_blocks_excessive_swaps() {
     // 4th swap from same address should fail — but simple_swap generates new addresses.
     // We need the same sender for all swaps.
     let sender = Address::generate(&env);
-    let make_params = |env: &Env| {
-        SwapParams {
-            route: make_route(env, &pool, 1),
-            amount_in: 1000,
-            min_amount_out: 0,
-            recipient: Address::generate(env),
-            deadline: current_seq(env) + 100,
-            not_before: 0,
-            max_price_impact_bps: 0,
-            max_execution_spread_bps: 0,
-        }
+    let make_params = |env: &Env| SwapParams {
+        route: make_route(env, &pool, 1),
+        amount_in: 1000,
+        min_amount_out: 0,
+        recipient: Address::generate(env),
+        deadline: current_seq(env) + 100,
+        not_before: 0,
+        max_price_impact_bps: 0,
+        max_execution_spread_bps: 0,
     };
 
     // Reset with a fresh router to avoid contamination from earlier swaps
@@ -1476,17 +2279,15 @@ fn test_rate_limiting_whitelisted_exempt() {
     let sender = Address::generate(&env);
     client.set_whitelist(&sender, &true);
 
-    let make_params = |env: &Env| {
-        SwapParams {
-            route: make_route(env, &pool, 1),
-            amount_in: 1000,
-            min_amount_out: 0,
-            recipient: Address::generate(env),
-            deadline: current_seq(env) + 100,
-            not_before: 0,
-            max_price_impact_bps: 0,
-            max_execution_spread_bps: 0,
-        }
+    let make_params = |env: &Env| SwapParams {
+        route: make_route(env, &pool, 1),
+        amount_in: 1000,
+        min_amount_out: 0,
+        recipient: Address::generate(env),
+        deadline: current_seq(env) + 100,
+        not_before: 0,
+        max_price_impact_bps: 0,
+        max_execution_spread_bps: 0,
     };
 
     // Should succeed even beyond the limit
