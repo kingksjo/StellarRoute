@@ -44,7 +44,7 @@ export function PriceDetailsPanel({
     // Derive values from the quote
     const price = parseFloat(quote.price);
     const total = parseFloat(quote.total);
-    const amount = parseFloat(quote.amount);
+    const _amount = parseFloat(quote.amount);
 
     // Estimate price impact (simplified — real impact comes from the backend)
     const priceImpactPct = quote.path.length > 1 ? 0.3 * quote.path.length : 0.1;

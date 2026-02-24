@@ -2,12 +2,12 @@
 
 import { useState } from 'react';
 import { SplitRouteData, RouteMetrics } from '@/types/route';
-import { PathStep } from '@/types';
+import { PathStep, Asset } from '@/types';
 import {
   ChevronDown,
   ChevronUp,
   Info,
-  TrendingRight,
+  ArrowRight,
   Split,
 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
@@ -23,7 +23,7 @@ interface SplitRouteVisualizationProps {
   className?: string;
 }
 
-function getAssetCode(asset: any): string {
+function getAssetCode(asset: Asset): string {
   if (asset.asset_type === 'native') return 'XLM';
   return asset.asset_code || 'UNKNOWN';
 }
@@ -94,7 +94,7 @@ function PathVisualization({
               )}
 
               <div className="flex flex-col items-center px-2">
-                <TrendingRight className="w-4 h-4 text-muted-foreground" />
+                <ArrowRight className="w-4 h-4 text-muted-foreground" />
                 <Badge
                   variant="secondary"
                   className={cn(
