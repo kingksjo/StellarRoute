@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { PathStep, Asset } from '@/types';
-import { ChevronDown, ChevronUp, Info, TrendingRight } from 'lucide-react';
+import { ChevronDown, ChevronUp, Info, ArrowRight } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -139,7 +139,7 @@ function RouteEdgeComponent({
           />
         )}
       </div>
-      <TrendingRight className="absolute w-4 h-4 text-muted-foreground" />
+      <ArrowRight className="absolute w-4 h-4 text-muted-foreground" />
       <Badge
         variant="secondary"
         className={cn(
@@ -191,7 +191,7 @@ export function RouteVisualization({
   className,
 }: RouteVisualizationProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [isAnimated, setIsAnimated] = useState(true);
+  const [isAnimated] = useState(true);
 
   // Loading state
   if (isLoading) {
@@ -277,7 +277,7 @@ export function RouteVisualization({
             <RouteNodeComponent node={node} />
             {index < edges.length && (
               <div className="flex flex-col items-center py-2">
-                <div className="h-8 w-[2px] bg-gradient-to-b from-transparent via-current to-transparent opacity-30" />
+                <div className="h-8 w-[2px] bg-linear-to-b from-transparent via-current to-transparent opacity-30" />
                 <Badge
                   variant="secondary"
                   className={cn(
@@ -291,7 +291,7 @@ export function RouteVisualization({
                     ? 'SDEX'
                     : edges[index].poolName || 'AMM'}
                 </Badge>
-                <div className="h-8 w-[2px] bg-gradient-to-b from-transparent via-current to-transparent opacity-30" />
+                <div className="h-8 w-[2px] bg-linear-to-b from-transparent via-current to-transparent opacity-30" />
               </div>
             )}
           </div>

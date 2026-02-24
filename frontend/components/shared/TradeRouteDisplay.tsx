@@ -13,7 +13,7 @@ interface TradeRouteDisplayProps {
   className?: string;
 }
 
-function isSplitRoute(path: PathStep[]): boolean {
+function isSplitRoute(_path: PathStep[]): boolean {
   // For now, we assume all routes are single-path
   // In the future, the API might return split route information
   return false;
@@ -105,6 +105,7 @@ export function TradeRouteExample() {
   const [error, setError] = useState<string>();
 
   // Example: Fetch quote from API
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const fetchQuote = async (
     baseAsset: string,
     quoteAsset: string,
