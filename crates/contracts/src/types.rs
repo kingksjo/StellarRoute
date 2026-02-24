@@ -41,6 +41,9 @@ pub struct SwapParams {
     pub min_amount_out: i128,
     pub recipient: Address,
     pub deadline: u64,
+    pub not_before: u64,
+    pub max_price_impact_bps: u32,
+    pub max_execution_spread_bps: u32,
 }
 
 #[contracttype]
@@ -62,14 +65,26 @@ pub struct SwapResult {
     pub executed_at: u64,
 }
 
+// --- MEV Protection Types ---
+
 #[contracttype]
 #[derive(Clone, Debug, PartialEq)]
-pub struct ResourceEstimate {
-    pub estimated_cpu: u64,
-    pub storage_reads: u32,
-    pub storage_writes: u32,
-    pub events: u32,
-    pub will_succeed: bool,
+pub struct CommitmentData {
+    pub sender: Address,
+    pub deposit_amount: i128,
+    pub created_at: u32,
+    pub expires_at: u32,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, PartialEq)]
+pub struct MevConfig {
+    pub commit_threshold: i128,
+    pub commit_window_ledgers: u32,
+    pub max_swaps_per_window: u32,
+    pub rate_limit_window: u32,
+    pub high_impact_threshold_bps: u32,
+    pub price_freshness_threshold_bps: u32,
 }
 
 // Interface for AMM pools (SEP-like standard)
@@ -77,3 +92,4 @@ pub trait LiquidityPoolInterface {
     fn get_rsrvs(e: Env) -> (i128, i128);
     fn swap_out(e: Env, in_asset: Asset, out_asset: Asset, amount_in: i128) -> i128;
 }
+

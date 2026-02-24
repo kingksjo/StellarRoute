@@ -1,5 +1,5 @@
-use crate::types::Asset;
-use soroban_sdk::{contracttype, Address, Env};
+use crate::types::{Asset, CommitmentData, MevConfig};
+use soroban_sdk::{contracttype, Address, BytesN, Env};
 
 #[contracttype]
 pub enum StorageKey {
@@ -10,6 +10,13 @@ pub enum StorageKey {
     SupportedPool(Address),
     PoolCount,
     SwapNonce(Address),
+    // MEV protection keys
+    MevConfig,
+    Commitment(BytesN<32>),
+    AccountSwapCount(Address),
+    AccountSwapWindowStart(Address),
+    Whitelisted(Address),
+    LatestKnownPrice(Address, Address),
 }
 
 #[contracttype]
@@ -24,6 +31,8 @@ pub struct InstanceConfig {
 const DAY_IN_LEDGERS: u32 = 17280;
 const INSTANCE_BUMP_AMOUNT: u32 = 7 * DAY_IN_LEDGERS;
 const INSTANCE_LIFETIME_THRESHOLD: u32 = DAY_IN_LEDGERS;
+const TEMP_BUMP_AMOUNT: u32 = DAY_IN_LEDGERS;
+const TEMP_LIFETIME_THRESHOLD: u32 = DAY_IN_LEDGERS / 2;
 
 pub fn extend_instance_ttl(e: &Env) {
     e.storage()
@@ -31,27 +40,7 @@ pub fn extend_instance_ttl(e: &Env) {
         .extend_ttl(INSTANCE_LIFETIME_THRESHOLD, INSTANCE_BUMP_AMOUNT);
 }
 
-// Optimized: Batch read all instance config in one operation
-pub fn get_instance_config(e: &Env) -> InstanceConfig {
-    let storage = e.storage().instance();
-    InstanceConfig {
-        admin: storage.get(&StorageKey::Admin).unwrap(),
-        fee_rate: storage.get(&StorageKey::FeeRate).unwrap_or(0),
-        fee_to: storage.get(&StorageKey::FeeTo).unwrap(),
-        paused: storage.get(&StorageKey::Paused).unwrap_or(false),
-    }
-}
-
-// Cache pool lookups during route execution
-pub fn batch_check_pools(e: &Env, pools: &soroban_sdk::Vec<Address>) -> bool {
-    for i in 0..pools.len() {
-        let pool = pools.get(i).unwrap();
-        if !e.storage().persistent().has(&StorageKey::SupportedPool(pool)) {
-            return false;
-        }
-    }
-    true
-}
+// --- Core storage helpers ---
 
 pub fn get_admin(e: &Env) -> Address {
     e.storage().instance().get(&StorageKey::Admin).unwrap()
@@ -127,15 +116,90 @@ pub fn transfer_asset(e: &Env, asset: &Asset, from: &Address, to: &Address, amou
     }
 }
 
-// Inline constant product calculation to avoid CCI for known pool types
-#[inline(always)]
-pub fn calculate_constant_product_output(
-    reserve_in: i128,
-    reserve_out: i128,
-    amount_in: i128,
-) -> i128 {
-    let amount_in_with_fee = amount_in * 997;
-    let numerator = amount_in_with_fee * reserve_out;
-    let denominator = (reserve_in * 1000) + amount_in_with_fee;
-    numerator / denominator
+// --- MEV Config ---
+
+pub fn get_mev_config(e: &Env) -> Option<MevConfig> {
+    e.storage().instance().get(&StorageKey::MevConfig)
 }
+
+pub fn set_mev_config(e: &Env, config: &MevConfig) {
+    e.storage().instance().set(&StorageKey::MevConfig, config);
+}
+
+// --- Commitment storage (Temporary) ---
+
+pub fn get_commitment(e: &Env, hash: &BytesN<32>) -> Option<CommitmentData> {
+    let key = StorageKey::Commitment(hash.clone());
+    e.storage().temporary().get(&key)
+}
+
+pub fn set_commitment(e: &Env, hash: &BytesN<32>, data: &CommitmentData, ttl_ledgers: u32) {
+    let key = StorageKey::Commitment(hash.clone());
+    e.storage().temporary().set(&key, data);
+    e.storage()
+        .temporary()
+        .extend_ttl(&key, TEMP_LIFETIME_THRESHOLD, ttl_ledgers);
+}
+
+pub fn remove_commitment(e: &Env, hash: &BytesN<32>) {
+    let key = StorageKey::Commitment(hash.clone());
+    e.storage().temporary().remove(&key);
+}
+
+// --- Rate limiting (Temporary) ---
+
+pub fn get_account_swap_count(e: &Env, address: &Address) -> u32 {
+    let key = StorageKey::AccountSwapCount(address.clone());
+    e.storage().temporary().get(&key).unwrap_or(0)
+}
+
+pub fn set_account_swap_count(e: &Env, address: &Address, count: u32, ttl_ledgers: u32) {
+    let key = StorageKey::AccountSwapCount(address.clone());
+    e.storage().temporary().set(&key, &count);
+    e.storage()
+        .temporary()
+        .extend_ttl(&key, TEMP_LIFETIME_THRESHOLD, ttl_ledgers);
+}
+
+pub fn get_account_swap_window_start(e: &Env, address: &Address) -> u32 {
+    let key = StorageKey::AccountSwapWindowStart(address.clone());
+    e.storage().temporary().get(&key).unwrap_or(0)
+}
+
+pub fn set_account_swap_window_start(e: &Env, address: &Address, start: u32, ttl_ledgers: u32) {
+    let key = StorageKey::AccountSwapWindowStart(address.clone());
+    e.storage().temporary().set(&key, &start);
+    e.storage()
+        .temporary()
+        .extend_ttl(&key, TEMP_LIFETIME_THRESHOLD, ttl_ledgers);
+}
+
+// --- Whitelist (Persistent) ---
+
+pub fn is_whitelisted(e: &Env, address: &Address) -> bool {
+    let key = StorageKey::Whitelisted(address.clone());
+    e.storage().persistent().get(&key).unwrap_or(false)
+}
+
+pub fn set_whitelisted(e: &Env, address: &Address, whitelisted: bool) {
+    let key = StorageKey::Whitelisted(address.clone());
+    e.storage().persistent().set(&key, &whitelisted);
+    if whitelisted {
+        e.storage()
+            .persistent()
+            .extend_ttl(&key, DAY_IN_LEDGERS, DAY_IN_LEDGERS * 30);
+    }
+}
+
+// --- Latest known price (Instance) ---
+
+pub fn get_latest_known_price(e: &Env, token_a: &Address, token_b: &Address) -> Option<i128> {
+    let key = StorageKey::LatestKnownPrice(token_a.clone(), token_b.clone());
+    e.storage().instance().get(&key)
+}
+
+pub fn set_latest_known_price(e: &Env, token_a: &Address, token_b: &Address, price: i128) {
+    let key = StorageKey::LatestKnownPrice(token_a.clone(), token_b.clone());
+    e.storage().instance().set(&key, &price);
+}
+
