@@ -163,7 +163,8 @@ pub(crate) fn execute_wasm_upgrade(
     }
 
     // Replace the WASM bytecode.
-    e.deployer().update_current_contract_wasm(new_wasm_hash.clone());
+    e.deployer()
+        .update_current_contract_wasm(new_wasm_hash.clone());
 
     // Record the new version (patch bump; callers can set major/minor via migrate).
     let new_version = ContractVersion {
@@ -175,12 +176,7 @@ pub(crate) fn execute_wasm_upgrade(
     };
     storage::set_contract_version(e, &new_version);
 
-    events::upgrade_completed(
-        e,
-        old_hash,
-        new_wasm_hash,
-        e.ledger().sequence() as u64,
-    );
+    events::upgrade_completed(e, old_hash, new_wasm_hash, e.ledger().sequence() as u64);
 
     // Run migration hook for the new version.
     migrate(e, &new_version)?;

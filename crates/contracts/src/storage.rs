@@ -1,4 +1,7 @@
-use crate::types::{Asset, ContractVersion, GovernanceConfig, PendingUpgrade, Proposal, TokenCategory, TokenInfo};
+use crate::types::{
+    Asset, CommitmentData, ContractVersion, GovernanceConfig, MevConfig, PendingUpgrade, Proposal,
+    TokenCategory, TokenInfo,
+};
 use soroban_sdk::{contracttype, Address, BytesN, Env};
 
 #[contracttype]
@@ -145,16 +148,11 @@ pub fn set_multisig(e: &Env) {
 }
 
 pub fn get_governance(e: &Env) -> GovernanceConfig {
-    e.storage()
-        .instance()
-        .get(&StorageKey::Governance)
-        .unwrap()
+    e.storage().instance().get(&StorageKey::Governance).unwrap()
 }
 
 pub fn set_governance(e: &Env, config: &GovernanceConfig) {
-    e.storage()
-        .instance()
-        .set(&StorageKey::Governance, config);
+    e.storage().instance().set(&StorageKey::Governance, config);
 }
 
 pub fn has_guardian(e: &Env) -> bool {
@@ -183,25 +181,19 @@ pub fn next_proposal_id(e: &Env) -> u64 {
 }
 
 pub fn get_proposal(e: &Env, id: u64) -> Option<Proposal> {
-    e.storage()
-        .persistent()
-        .get(&StorageKey::ProposalEntry(id))
+    e.storage().persistent().get(&StorageKey::ProposalEntry(id))
 }
 
 pub fn save_proposal(e: &Env, proposal: &Proposal) {
     let key = StorageKey::ProposalEntry(proposal.id);
     e.storage().persistent().set(&key, proposal);
-    e.storage()
-        .persistent()
-        .extend_ttl(&key, 17280, 17280 * 30);
+    e.storage().persistent().extend_ttl(&key, 17280, 17280 * 30);
 }
 
 // ─── Upgrade helpers ─────────────────────────────────────────────────────────
 
 pub fn get_contract_version(e: &Env) -> Option<ContractVersion> {
-    e.storage()
-        .instance()
-        .get(&StorageKey::ContractVersionKey)
+    e.storage().instance().get(&StorageKey::ContractVersionKey)
 }
 
 pub fn set_contract_version(e: &Env, version: &ContractVersion) {
@@ -217,9 +209,7 @@ pub fn set_contract_version(e: &Env, version: &ContractVersion) {
 }
 
 pub fn get_pending_upgrade(e: &Env) -> Option<PendingUpgrade> {
-    e.storage()
-        .instance()
-        .get(&StorageKey::PendingUpgradeKey)
+    e.storage().instance().get(&StorageKey::PendingUpgradeKey)
 }
 
 pub fn set_pending_upgrade(e: &Env, pending: &PendingUpgrade) {
@@ -317,7 +307,7 @@ pub fn set_commitment(e: &Env, hash: &BytesN<32>, data: &CommitmentData, ttl_led
     e.storage().temporary().set(&key, data);
     e.storage()
         .temporary()
-        .extend_ttl(&key, TEMP_LIFETIME_THRESHOLD, ttl_ledgers);
+        .extend_ttl(&key, ttl_ledgers, ttl_ledgers);
 }
 
 pub fn remove_commitment(e: &Env, hash: &BytesN<32>) {
@@ -337,7 +327,7 @@ pub fn set_account_swap_count(e: &Env, address: &Address, count: u32, ttl_ledger
     e.storage().temporary().set(&key, &count);
     e.storage()
         .temporary()
-        .extend_ttl(&key, TEMP_LIFETIME_THRESHOLD, ttl_ledgers);
+        .extend_ttl(&key, ttl_ledgers, ttl_ledgers);
 }
 
 pub fn get_account_swap_window_start(e: &Env, address: &Address) -> u32 {
@@ -350,7 +340,7 @@ pub fn set_account_swap_window_start(e: &Env, address: &Address, start: u32, ttl
     e.storage().temporary().set(&key, &start);
     e.storage()
         .temporary()
-        .extend_ttl(&key, TEMP_LIFETIME_THRESHOLD, ttl_ledgers);
+        .extend_ttl(&key, ttl_ledgers, ttl_ledgers);
 }
 
 // --- Whitelist (Persistent) ---
@@ -381,4 +371,3 @@ pub fn set_latest_known_price(e: &Env, token_a: &Address, token_b: &Address, pri
     let key = StorageKey::LatestKnownPrice(token_a.clone(), token_b.clone());
     e.storage().instance().set(&key, &price);
 }
-

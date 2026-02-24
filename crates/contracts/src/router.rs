@@ -5,11 +5,13 @@ use crate::storage::{
     transfer_asset, StorageKey,
 };
 use crate::types::{
-    ContractVersion, GovernanceConfig, Proposal, ProposalAction, QuoteResult, Route, SwapParams,
-    SwapResult, TokenCategory, TokenInfo,
+    CommitmentData, ContractVersion, GovernanceConfig, MevConfig, Proposal, ProposalAction,
+    QuoteResult, Route, SwapParams, SwapResult, TokenCategory, TokenInfo,
 };
 use crate::{governance, tokens, upgrade};
-use soroban_sdk::{contract, contractimpl, symbol_short, vec, Address, BytesN, Env, IntoVal, Symbol, Vec};
+use soroban_sdk::{
+    contract, contractimpl, symbol_short, vec, Address, Bytes, BytesN, Env, IntoVal, Symbol, Vec,
+};
 
 const CONTRACT_VERSION: u32 = 2;
 
@@ -171,11 +173,7 @@ impl StellarRoute {
     }
 
     /// Cancel a proposal (proposer or any signer).
-    pub fn cancel_proposal(
-        e: Env,
-        signer: Address,
-        proposal_id: u64,
-    ) -> Result<(), ContractError> {
+    pub fn cancel_proposal(e: Env, signer: Address, proposal_id: u64) -> Result<(), ContractError> {
         if !storage::is_multisig(&e) {
             return Err(ContractError::NotMultiSig);
         }
@@ -265,10 +263,7 @@ impl StellarRoute {
     }
 
     /// Read-only: return token metadata.
-    pub fn get_token_info(
-        e: Env,
-        asset: crate::types::Asset,
-    ) -> Option<TokenInfo> {
+    pub fn get_token_info(e: Env, asset: crate::types::Asset) -> Option<TokenInfo> {
         tokens::get_token_info(&e, &asset)
     }
 
@@ -278,10 +273,7 @@ impl StellarRoute {
     }
 
     /// Read-only: all active assets in a given category.
-    pub fn get_tokens_by_category(
-        e: Env,
-        category: TokenCategory,
-    ) -> Vec<crate::types::Asset> {
+    pub fn get_tokens_by_category(e: Env, category: TokenCategory) -> Vec<crate::types::Asset> {
         tokens::get_tokens_by_category(&e, category)
     }
 
@@ -323,11 +315,7 @@ impl StellarRoute {
         Ok(())
     }
 
-    pub fn set_whitelist(
-        e: Env,
-        address: Address,
-        whitelisted: bool,
-    ) -> Result<(), ContractError> {
+    pub fn set_whitelist(e: Env, address: Address, whitelisted: bool) -> Result<(), ContractError> {
         storage::get_admin(&e).require_auth();
         storage::set_whitelisted(&e, &address, whitelisted);
         extend_instance_ttl(&e);
@@ -377,7 +365,12 @@ impl StellarRoute {
             expires_at,
         };
 
-        storage::set_commitment(&e, &commitment_hash, &commitment, mev_config.commit_window_ledgers);
+        storage::set_commitment(
+            &e,
+            &commitment_hash,
+            &commitment,
+            mev_config.commit_window_ledgers,
+        );
 
         events::commitment_created(&e, sender, commitment_hash, deposit_amount);
         extend_instance_ttl(&e);
@@ -400,7 +393,7 @@ impl StellarRoute {
         payload.append(&Bytes::from_slice(&e, &params.deadline.to_be_bytes()));
         let salt_bytes: Bytes = salt.into();
         payload.append(&salt_bytes);
-        let computed_hash = e.crypto().sha256(&payload);
+        let computed_hash: BytesN<32> = e.crypto().sha256(&payload).into();
 
         // Verify commitment exists
         let commitment =
@@ -536,9 +529,7 @@ impl StellarRoute {
                 let window_start = storage::get_account_swap_window_start(e, sender);
                 let swap_count = storage::get_account_swap_count(e, sender);
 
-                if window_start > 0
-                    && current_ledger < window_start + mev_config.rate_limit_window
-                {
+                if swap_count > 0 && current_ledger < window_start + mev_config.rate_limit_window {
                     // Still within the window
                     if swap_count >= mev_config.max_swaps_per_window {
                         events::rate_limit_hit(

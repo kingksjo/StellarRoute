@@ -58,9 +58,15 @@ pub enum ContractError {
     TokenInUse = 82,
     /// Batch add exceeds the 10-token-per-call limit.
     BatchTooLarge = 83,
-    CommitmentRequired = 50,
-    CommitmentNotFound = 51,
-    CommitmentExpired = 52,
-    InvalidReveal = 53,
-    RateLimitExceeded = 60,
+    // ── MEV protection ───────────────────────────────────────────────────
+    /// Swap exceeds commit threshold; must use commit-reveal flow.
+    CommitmentRequired = 90,
+    /// Commitment hash not found in storage.
+    CommitmentNotFound = 91,
+    /// Commitment window has passed.
+    CommitmentExpired = 92,
+    /// Revealed params do not match committed hash.
+    InvalidReveal = 93,
+    /// Sender has exceeded the per-window swap rate limit.
+    RateLimitExceeded = 94,
 }

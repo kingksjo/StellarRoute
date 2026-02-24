@@ -99,11 +99,11 @@ pub trait LiquidityPoolInterface {
 #[contracttype]
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum TokenCategory {
-    Native,      // XLM
-    Stablecoin,  // USDC, USDT, etc.
-    Wrapped,     // Wrapped assets (wBTC, wETH)
-    Ecosystem,   // Stellar ecosystem tokens
-    Community,   // Community-added tokens
+    Native,     // XLM
+    Stablecoin, // USDC, USDT, etc.
+    Wrapped,    // Wrapped assets (wBTC, wETH)
+    Ecosystem,  // Stellar ecosystem tokens
+    Community,  // Community-added tokens
 }
 
 /// On-chain metadata for a whitelisted token.

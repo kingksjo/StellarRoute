@@ -65,9 +65,7 @@ fn dispatch_action(e: &Env, action: ProposalAction) -> Result<(), ContractError>
         ProposalAction::RegisterPool(pool, _pool_type) => {
             let key = StorageKey::SupportedPool(pool.clone());
             e.storage().persistent().set(&key, &true);
-            e.storage()
-                .persistent()
-                .extend_ttl(&key, 17280, 17280 * 30);
+            e.storage().persistent().extend_ttl(&key, 17280, 17280 * 30);
             let new_count = storage::get_pool_count(e) + 1;
             storage::set_pool_count(e, new_count);
             events::pool_registered(e, pool);
@@ -233,8 +231,8 @@ pub fn approve(e: &Env, signer: Address, proposal_id: u64) -> Result<(), Contrac
         return Err(ContractError::Unauthorized);
     }
 
-    let mut proposal = storage::get_proposal(e, proposal_id)
-        .ok_or(ContractError::ProposalNotFound)?;
+    let mut proposal =
+        storage::get_proposal(e, proposal_id).ok_or(ContractError::ProposalNotFound)?;
 
     if proposal.executed {
         return Err(ContractError::ProposalAlreadyExecuted);
@@ -263,8 +261,8 @@ pub fn approve(e: &Env, signer: Address, proposal_id: u64) -> Result<(), Contrac
 /// Manually trigger execution of a proposal that has met the approval threshold.
 pub fn execute_proposal(e: &Env, proposal_id: u64) -> Result<(), ContractError> {
     let config = storage::get_governance(e);
-    let mut proposal = storage::get_proposal(e, proposal_id)
-        .ok_or(ContractError::ProposalNotFound)?;
+    let mut proposal =
+        storage::get_proposal(e, proposal_id).ok_or(ContractError::ProposalNotFound)?;
 
     if proposal.executed {
         return Err(ContractError::ProposalAlreadyExecuted);
@@ -295,8 +293,8 @@ pub fn cancel(e: &Env, signer: Address, proposal_id: u64) -> Result<(), Contract
     signer.require_auth();
     let config = storage::get_governance(e);
 
-    let mut proposal = storage::get_proposal(e, proposal_id)
-        .ok_or(ContractError::ProposalNotFound)?;
+    let mut proposal =
+        storage::get_proposal(e, proposal_id).ok_or(ContractError::ProposalNotFound)?;
 
     if proposal.executed {
         return Err(ContractError::ProposalAlreadyExecuted);

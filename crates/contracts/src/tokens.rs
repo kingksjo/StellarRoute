@@ -118,11 +118,7 @@ pub fn remove_token(e: &Env, caller: Address, asset: Asset) -> Result<(), Contra
 }
 
 /// Internal remove — called by governance dispatch as well.
-pub fn remove_token_internal(
-    e: &Env,
-    caller: Address,
-    asset: Asset,
-) -> Result<(), ContractError> {
+pub fn remove_token_internal(e: &Env, caller: Address, asset: Asset) -> Result<(), ContractError> {
     if !st::is_token_allowed(e, &asset) {
         return Err(ContractError::TokenNotAllowed);
     }

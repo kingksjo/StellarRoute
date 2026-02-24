@@ -171,4 +171,3 @@ pub fn commitment_revealed(e: &Env, sender: Address, commitment_hash: BytesN<32>
     );
     e.events().publish(topics, commitment_hash);
 }
-

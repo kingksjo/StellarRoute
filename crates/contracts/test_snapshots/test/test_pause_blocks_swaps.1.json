@@ -585,6 +585,22 @@
                     },
                     {
                       "key": {
+                        "symbol": "max_execution_spread_bps"
+                      },
+                      "val": {
+                        "u32": 0
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "max_price_impact_bps"
+                      },
+                      "val": {
+                        "u32": 0
+                      }
+                    },
+                    {
+                      "key": {
                         "symbol": "min_amount_out"
                       },
                       "val": {
@@ -592,6 +608,14 @@
                           "hi": 0,
                           "lo": 0
                         }
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "not_before"
+                      },
+                      "val": {
+                        "u64": 0
                       }
                     },
                     {
@@ -810,6 +834,22 @@
                         },
                         {
                           "key": {
+                            "symbol": "max_execution_spread_bps"
+                          },
+                          "val": {
+                            "u32": 0
+                          }
+                        },
+                        {
+                          "key": {
+                            "symbol": "max_price_impact_bps"
+                          },
+                          "val": {
+                            "u32": 0
+                          }
+                        },
+                        {
+                          "key": {
                             "symbol": "min_amount_out"
                           },
                           "val": {
@@ -817,6 +857,14 @@
                               "hi": 0,
                               "lo": 0
                             }
+                          }
+                        },
+                        {
+                          "key": {
+                            "symbol": "not_before"
+                          },
+                          "val": {
+                            "u64": 0
                           }
                         },
                         {

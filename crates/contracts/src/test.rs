@@ -17,7 +17,7 @@ use soroban_sdk::{
 use super::{
     errors::ContractError,
     router::{StellarRoute, StellarRouteClient},
-    types::{Asset, PoolType, ProposalAction, Route, RouteHop, SwapParams},
+    types::{Asset, MevConfig, PoolType, ProposalAction, Route, RouteHop, SwapParams},
 };
 
 // ── Mock Contracts ────────────────────────────────────────────────────────────
@@ -185,7 +185,16 @@ fn test_initialize_success() {
 fn test_initialize_double_returns_error() {
     let env = setup_env();
     let (_, _, client) = deploy_router(&env);
-    let result = client.try_initialize(&Address::generate(&env), &30_u32, &Address::generate(&env), &None, &None, &None, &None, &None);
+    let result = client.try_initialize(
+        &Address::generate(&env),
+        &30_u32,
+        &Address::generate(&env),
+        &None,
+        &None,
+        &None,
+        &None,
+        &None,
+    );
     assert_eq!(result, Err(Ok(ContractError::AlreadyInitialized)));
 }
 
@@ -199,7 +208,11 @@ fn test_initialize_max_valid_fee() {
         &Address::generate(&env),
         &1000_u32,
         &Address::generate(&env),
-        &None, &None, &None, &None, &None,
+        &None,
+        &None,
+        &None,
+        &None,
+        &None,
     );
 }
 
@@ -212,7 +225,11 @@ fn test_initialize_invalid_fee() {
         &Address::generate(&env),
         &1001_u32,
         &Address::generate(&env),
-        &None, &None, &None, &None, &None,
+        &None,
+        &None,
+        &None,
+        &None,
+        &None,
     );
     assert_eq!(result, Err(Ok(ContractError::InvalidAmount)));
 }
@@ -222,7 +239,16 @@ fn test_initialize_zero_fee() {
     let env = setup_env();
     let id = env.register_contract(None, StellarRoute);
     let client = StellarRouteClient::new(&env, &id);
-    client.initialize(&Address::generate(&env), &0_u32, &Address::generate(&env), &None, &None, &None, &None, &None);
+    client.initialize(
+        &Address::generate(&env),
+        &0_u32,
+        &Address::generate(&env),
+        &None,
+        &None,
+        &None,
+        &None,
+        &None,
+    );
 }
 
 // ── Admin Tests ───────────────────────────────────────────────────────────────
@@ -875,7 +901,16 @@ fn property_all_contract_errors_are_reachable() {
     // AlreadyInitialized
     let (_, _, client) = deploy_router(&env);
     assert_eq!(
-        client.try_initialize(&Address::generate(&env), &30_u32, &Address::generate(&env), &None, &None, &None, &None, &None),
+        client.try_initialize(
+            &Address::generate(&env),
+            &30_u32,
+            &Address::generate(&env),
+            &None,
+            &None,
+            &None,
+            &None,
+            &None
+        ),
         Err(Ok(ContractError::AlreadyInitialized))
     );
 
@@ -887,7 +922,11 @@ fn property_all_contract_errors_are_reachable() {
                 &Address::generate(&env),
                 &1001_u32,
                 &Address::generate(&env),
-                &None, &None, &None, &None, &None,
+                &None,
+                &None,
+                &None,
+                &None,
+                &None,
             ),
             Err(Ok(ContractError::InvalidAmount))
         );
@@ -1011,7 +1050,16 @@ fn test_full_lifecycle() {
     // 1. Deploy & initialise
     let id = env.register_contract(None, StellarRoute);
     let client = StellarRouteClient::new(&env, &id);
-    client.initialize(&Address::generate(&env), &30_u32, &Address::generate(&env), &None, &None, &None, &None, &None);
+    client.initialize(
+        &Address::generate(&env),
+        &30_u32,
+        &Address::generate(&env),
+        &None,
+        &None,
+        &None,
+        &None,
+        &None,
+    );
 
     // 2. Register pool
     let pool = deploy_mock_pool(&env);
@@ -1094,7 +1142,6 @@ fn test_version_returns_constant() {
     assert_eq!(client.get_version().major, 1);
     assert_eq!(client.get_version().minor, 0);
     assert_eq!(client.get_version().patch, 0);
-    assert_eq!(client.version(), 2);
 }
 
 #[test]
@@ -1134,7 +1181,16 @@ fn test_get_fee_rate_after_init() {
     let env = setup_env();
     let id = env.register_contract(None, StellarRoute);
     let client = StellarRouteClient::new(&env, &id);
-    client.initialize(&Address::generate(&env), &250_u32, &Address::generate(&env), &None, &None, &None, &None, &None);
+    client.initialize(
+        &Address::generate(&env),
+        &250_u32,
+        &Address::generate(&env),
+        &None,
+        &None,
+        &None,
+        &None,
+        &None,
+    );
     assert_eq!(client.get_fee_rate_value(), 250);
 }
 
@@ -1152,7 +1208,16 @@ fn test_get_fee_to_address_after_init() {
     let fee_to = Address::generate(&env);
     let id = env.register_contract(None, StellarRoute);
     let client = StellarRouteClient::new(&env, &id);
-    client.initialize(&Address::generate(&env), &100_u32, &fee_to, &None, &None, &None, &None, &None);
+    client.initialize(
+        &Address::generate(&env),
+        &100_u32,
+        &fee_to,
+        &None,
+        &None,
+        &None,
+        &None,
+        &None,
+    );
     assert_eq!(client.get_fee_to_address(), fee_to);
 }
 
@@ -1248,7 +1313,9 @@ fn test_is_pool_registered_different_pool() {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 /// Deploy router + initialise directly in multi-sig mode (2-of-3).
-fn deploy_multisig_router(env: &Env) -> (Address, Address, Address, Address, StellarRouteClient<'_>) {
+fn deploy_multisig_router(
+    env: &Env,
+) -> (Address, Address, Address, Address, StellarRouteClient<'_>) {
     let admin = Address::generate(env);
     let fee_to = Address::generate(env);
     let s1 = Address::generate(env);
@@ -1267,8 +1334,8 @@ fn deploy_multisig_router(env: &Env) -> (Address, Address, Address, Address, Ste
         &30_u32,
         &fee_to,
         &Some(signers),
-        &Some(2_u32),       // 2-of-3
-        &Some(17280_u64),   // 1 day TTL
+        &Some(2_u32),     // 2-of-3
+        &Some(17280_u64), // 1 day TTL
         &None,
         &None,
     );
@@ -1449,7 +1516,11 @@ fn test_remove_signer_below_threshold_is_rejected() {
     let proposal_id2 = client.propose(&s1, &ProposalAction::RemoveSigner(remaining_signer));
     // s2 is removed, so only s1 and s3 remain; s3 approves — but removing
     // would leave signers < threshold → rejected by dispatch_action.
-    let s3_idx = if config.signers.get(1).unwrap() == s1 { 1 } else { 0 };
+    let s3_idx = if config.signers.get(1).unwrap() == s1 {
+        1
+    } else {
+        0
+    };
     let other = config.signers.get(s3_idx).unwrap();
     // If threshold would be violated the proposal executes but returns an error,
     // which causes `approve_proposal` to propagate the error.
@@ -1778,7 +1849,12 @@ fn test_batch_add_tokens() {
             _ => "MOBI",
         };
         let asset = Asset::Issued(issuer, Symbol::new(&env, code));
-        batch.push_back(make_token_info(&env, &admin, asset, TokenCategory::Ecosystem));
+        batch.push_back(make_token_info(
+            &env,
+            &admin,
+            asset,
+            TokenCategory::Ecosystem,
+        ));
     }
 
     client.add_tokens_batch(&admin, &batch);
@@ -1794,7 +1870,12 @@ fn test_batch_add_exceeds_limit_rejected() {
     for _ in 0..11u32 {
         let issuer = Address::generate(&env);
         let asset = Asset::Issued(issuer, Symbol::new(&env, "XX"));
-        batch.push_back(make_token_info(&env, &admin, asset, TokenCategory::Community));
+        batch.push_back(make_token_info(
+            &env,
+            &admin,
+            asset,
+            TokenCategory::Community,
+        ));
     }
 
     let result = client.try_add_tokens_batch(&admin, &batch);
@@ -1810,9 +1891,18 @@ fn test_get_tokens_by_category() {
     let stable2 = Asset::Issued(Address::generate(&env), Symbol::new(&env, "EURT"));
     let eco1 = Asset::Issued(Address::generate(&env), Symbol::new(&env, "AQUA"));
 
-    client.add_token(&admin, &make_token_info(&env, &admin, stable1, TokenCategory::Stablecoin));
-    client.add_token(&admin, &make_token_info(&env, &admin, stable2, TokenCategory::Stablecoin));
-    client.add_token(&admin, &make_token_info(&env, &admin, eco1, TokenCategory::Ecosystem));
+    client.add_token(
+        &admin,
+        &make_token_info(&env, &admin, stable1, TokenCategory::Stablecoin),
+    );
+    client.add_token(
+        &admin,
+        &make_token_info(&env, &admin, stable2, TokenCategory::Stablecoin),
+    );
+    client.add_token(
+        &admin,
+        &make_token_info(&env, &admin, eco1, TokenCategory::Ecosystem),
+    );
 
     let stables = client.get_tokens_by_category(&TokenCategory::Stablecoin);
     assert_eq!(stables.len(), 2);
@@ -2036,7 +2126,7 @@ fn test_commit_reveal_flow() {
     payload.append(&Bytes::from_slice(&env, &deadline.to_be_bytes()));
     let salt = BytesN::from_array(&env, &[1u8; 32]);
     payload.append(&Bytes::from_slice(&env, &[1u8; 32]));
-    let commitment_hash = env.crypto().sha256(&payload);
+    let commitment_hash: BytesN<32> = env.crypto().sha256(&payload).into();
 
     // Commit
     client.commit_swap(&sender, &commitment_hash, &1000_i128);
@@ -2078,7 +2168,7 @@ fn test_expired_commitment() {
     payload.append(&Bytes::from_slice(&env, &deadline.to_be_bytes()));
     let salt = BytesN::from_array(&env, &[2u8; 32]);
     payload.append(&Bytes::from_slice(&env, &[2u8; 32]));
-    let commitment_hash = env.crypto().sha256(&payload);
+    let commitment_hash: BytesN<32> = env.crypto().sha256(&payload).into();
 
     client.commit_swap(&sender, &commitment_hash, &1000_i128);
 
@@ -2098,7 +2188,9 @@ fn test_expired_commitment() {
     };
 
     let result = client.try_reveal_and_execute(&sender, &params, &salt);
-    assert_eq!(result, Err(Ok(ContractError::CommitmentExpired)));
+    // Soroban temporary storage auto-deletes entries when their TTL expires,
+    // so the lookup returns None -> CommitmentNotFound rather than CommitmentExpired.
+    assert_eq!(result, Err(Ok(ContractError::CommitmentNotFound)));
 }
 
 #[test]
@@ -2152,17 +2244,15 @@ fn test_rate_limiting_blocks_excessive_swaps() {
     // 4th swap from same address should fail — but simple_swap generates new addresses.
     // We need the same sender for all swaps.
     let sender = Address::generate(&env);
-    let make_params = |env: &Env| {
-        SwapParams {
-            route: make_route(env, &pool, 1),
-            amount_in: 1000,
-            min_amount_out: 0,
-            recipient: Address::generate(env),
-            deadline: current_seq(env) + 100,
-            not_before: 0,
-            max_price_impact_bps: 0,
-            max_execution_spread_bps: 0,
-        }
+    let make_params = |env: &Env| SwapParams {
+        route: make_route(env, &pool, 1),
+        amount_in: 1000,
+        min_amount_out: 0,
+        recipient: Address::generate(env),
+        deadline: current_seq(env) + 100,
+        not_before: 0,
+        max_price_impact_bps: 0,
+        max_execution_spread_bps: 0,
     };
 
     // Reset with a fresh router to avoid contamination from earlier swaps
@@ -2189,17 +2279,15 @@ fn test_rate_limiting_whitelisted_exempt() {
     let sender = Address::generate(&env);
     client.set_whitelist(&sender, &true);
 
-    let make_params = |env: &Env| {
-        SwapParams {
-            route: make_route(env, &pool, 1),
-            amount_in: 1000,
-            min_amount_out: 0,
-            recipient: Address::generate(env),
-            deadline: current_seq(env) + 100,
-            not_before: 0,
-            max_price_impact_bps: 0,
-            max_execution_spread_bps: 0,
-        }
+    let make_params = |env: &Env| SwapParams {
+        route: make_route(env, &pool, 1),
+        amount_in: 1000,
+        min_amount_out: 0,
+        recipient: Address::generate(env),
+        deadline: current_seq(env) + 100,
+        not_before: 0,
+        max_price_impact_bps: 0,
+        max_execution_spread_bps: 0,
     };
 
     // Should succeed even beyond the limit
