@@ -17,4 +17,6 @@ pub mod types;
 pub mod upgrade;
 
 #[cfg(test)]
+mod benchmarks;
+#[cfg(test)]
 mod test;

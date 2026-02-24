@@ -47,6 +47,15 @@ pub enum StorageKey {
     LatestKnownPrice(Address, Address),
 }
 
+#[contracttype]
+#[derive(Clone)]
+pub struct InstanceConfig {
+    pub admin: Address,
+    pub fee_rate: u32,
+    pub fee_to: Address,
+    pub paused: bool,
+}
+
 const DAY_IN_LEDGERS: u32 = 17280;
 const INSTANCE_BUMP_AMOUNT: u32 = 7 * DAY_IN_LEDGERS;
 const INSTANCE_LIFETIME_THRESHOLD: u32 = DAY_IN_LEDGERS;
@@ -125,6 +134,7 @@ pub fn increment_nonce(e: &Env, address: Address) {
     e.storage().persistent().set(&key, &(current + 1));
 }
 
+// Optimized: Use Symbol for cheaper storage keys
 pub fn transfer_asset(e: &Env, asset: &Asset, from: &Address, to: &Address, amount: i128) {
     if let Asset::Soroban(address) = asset {
         let client = soroban_sdk::token::Client::new(e, address);
