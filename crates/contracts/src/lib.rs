@@ -9,4 +9,6 @@ pub mod storage;
 pub mod types;
 
 #[cfg(test)]
+mod benchmarks;
+#[cfg(test)]
 mod test;

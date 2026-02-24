@@ -97,14 +97,14 @@ use mock_failing::MockFailingPool;
 // ── Test Utilities ────────────────────────────────────────────────────────────
 
 /// Create a fresh Env with all auth mocked — standard for unit tests.
-fn setup_env() -> Env {
+pub(crate) fn setup_env() -> Env {
     let env = Env::default();
     env.mock_all_auths();
     env
 }
 
 /// Deploy and initialise the router. Returns (admin, fee_to, client).
-fn deploy_router(env: &Env) -> (Address, Address, StellarRouteClient<'_>) {
+pub(crate) fn deploy_router(env: &Env) -> (Address, Address, StellarRouteClient<'_>) {
     let admin = Address::generate(env);
     let fee_to = Address::generate(env);
     let id = env.register_contract(None, StellarRoute);
@@ -113,7 +113,7 @@ fn deploy_router(env: &Env) -> (Address, Address, StellarRouteClient<'_>) {
     (admin, fee_to, client)
 }
 
-fn deploy_mock_pool(env: &Env) -> Address {
+pub(crate) fn deploy_mock_pool(env: &Env) -> Address {
     env.register_contract(None, MockAmmPool)
 }
 
@@ -121,7 +121,7 @@ fn deploy_failing_pool(env: &Env) -> Address {
     env.register_contract(None, MockFailingPool)
 }
 
-fn make_route(env: &Env, pool: &Address, hops: u32) -> Route {
+pub(crate) fn make_route(env: &Env, pool: &Address, hops: u32) -> Route {
     let mut v = Vec::new(env);
     for _ in 0..hops {
         v.push_back(RouteHop {

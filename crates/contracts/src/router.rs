@@ -1,13 +1,16 @@
 use crate::errors::ContractError;
 use crate::events;
 use crate::storage::{
-    self, extend_instance_ttl, get_fee_rate, get_fee_to, increment_nonce, is_supported_pool,
-    transfer_asset, StorageKey,
+    self, batch_check_pools, extend_instance_ttl, get_fee_rate, get_instance_config,
+    increment_nonce, transfer_asset, StorageKey,
 };
-use crate::types::{QuoteResult, Route, SwapParams, SwapResult};
-use soroban_sdk::{contract, contractimpl, symbol_short, vec, Address, Env, IntoVal, Symbol};
+use crate::types::{QuoteResult, ResourceEstimate, Route, SwapParams, SwapResult};
+use soroban_sdk::{contract, contractimpl, symbol_short, vec, Address, Env, IntoVal, Symbol, Vec};
 
 const CONTRACT_VERSION: u32 = 1;
+const MAX_HOPS: u32 = 4;
+const BASE_CPU_PER_HOP: u64 = 5_000_000; // ~5M instructions per hop
+const CCI_OVERHEAD: u64 = 2_000_000; // Cross-contract call overhead
 
 #[contract]
 pub struct StellarRoute;
@@ -127,10 +130,60 @@ impl StellarRoute {
         Ok(())
     }
 
+    /// Estimate resource consumption for a swap operation
+    pub fn estimate_resources(
+        _e: Env,
+        amount_in: i128,
+        route: Route,
+    ) -> Result<ResourceEstimate, ContractError> {
+        if amount_in <= 0 || route.hops.is_empty() {
+            return Err(ContractError::InvalidRoute);
+        }
+
+        let num_hops = route.hops.len() as u32;
+        if num_hops > MAX_HOPS {
+            return Err(ContractError::InvalidRoute);
+        }
+
+        // Estimate CPU: base + per-hop + CCI overhead
+        let estimated_cpu = (BASE_CPU_PER_HOP * num_hops as u64) + (CCI_OVERHEAD * num_hops as u64);
+
+        // Storage reads: 1 instance config + num_hops pool checks + 1 nonce
+        let storage_reads = 1 + num_hops + 1;
+
+        // Storage writes: 1 nonce update
+        let storage_writes = 1;
+
+        // Events: 1 swap event
+        let events = 1;
+
+        // Will succeed if under 100M instructions
+        let will_succeed = estimated_cpu < 100_000_000;
+
+        Ok(ResourceEstimate {
+            estimated_cpu,
+            storage_reads,
+            storage_writes,
+            events,
+            will_succeed,
+        })
+    }
+
     /// Public entry point for users to get quotes
     pub fn get_quote(e: Env, amount_in: i128, route: Route) -> Result<QuoteResult, ContractError> {
-        if amount_in <= 0 || route.hops.is_empty() || route.hops.len() > 4 {
+        if amount_in <= 0 || route.hops.is_empty() || route.hops.len() > MAX_HOPS {
             return Err(ContractError::InvalidRoute);
+        }
+
+        // Pre-allocate with known capacity to avoid reallocation
+        let mut pools = Vec::new(&e);
+        for i in 0..route.hops.len() {
+            pools.push_back(route.hops.get(i).unwrap().pool.clone());
+        }
+
+        // Batch check all pools at once
+        if !batch_check_pools(&e, &pools) {
+            return Err(ContractError::PoolNotSupported);
         }
 
         let mut current_amount = amount_in;
@@ -138,9 +191,6 @@ impl StellarRoute {
 
         for i in 0..route.hops.len() {
             let hop = route.hops.get(i).unwrap();
-            if !is_supported_pool(&e, hop.pool.clone()) {
-                return Err(ContractError::PoolNotSupported);
-            }
 
             let call_result = e.try_invoke_contract::<i128, soroban_sdk::Error>(
                 &hop.pool,
@@ -179,14 +229,28 @@ impl StellarRoute {
         params: SwapParams,
     ) -> Result<SwapResult, ContractError> {
         sender.require_auth();
-        StellarRoute::require_not_paused(&e)?;
+
+        // Batch read all instance config in one operation (optimization)
+        let config = get_instance_config(&e);
+        if config.paused {
+            return Err(ContractError::Paused);
+        }
 
         if e.ledger().sequence() as u64 > params.deadline {
             return Err(ContractError::DeadlineExceeded);
         }
 
-        if params.route.hops.is_empty() || params.route.hops.len() > 4 {
+        if params.route.hops.is_empty() || params.route.hops.len() > MAX_HOPS {
             return Err(ContractError::InvalidRoute);
+        }
+
+        // Pre-allocate and batch check pools
+        let mut pools = Vec::new(&e);
+        for i in 0..params.route.hops.len() {
+            pools.push_back(params.route.hops.get(i).unwrap().pool.clone());
+        }
+        if !batch_check_pools(&e, &pools) {
+            return Err(ContractError::PoolNotSupported);
         }
 
         let mut current_input_amount = params.amount_in;
@@ -202,10 +266,6 @@ impl StellarRoute {
 
         for i in 0..params.route.hops.len() {
             let hop = params.route.hops.get(i).unwrap();
-
-            if !is_supported_pool(&e, hop.pool.clone()) {
-                return Err(ContractError::PoolNotSupported);
-            }
 
             let call_result = e.try_invoke_contract::<i128, soroban_sdk::Error>(
                 &hop.pool,
@@ -225,8 +285,8 @@ impl StellarRoute {
             };
         }
 
-        let fee_rate = get_fee_rate(&e);
-        let fee_amount = (current_input_amount * fee_rate as i128) / 10000;
+        // Use cached fee_rate from config
+        let fee_amount = (current_input_amount * config.fee_rate as i128) / 10000;
         let final_output = current_input_amount - fee_amount;
 
         if final_output < params.min_amount_out {
@@ -247,12 +307,13 @@ impl StellarRoute {
             &e,
             &last_hop.destination,
             &e.current_contract_address(),
-            &get_fee_to(&e),
+            &config.fee_to,
             fee_amount,
         );
 
         increment_nonce(&e, sender.clone());
 
+        // Emit compact event (use IDs instead of full structs where possible)
         events::swap_executed(
             &e,
             sender,

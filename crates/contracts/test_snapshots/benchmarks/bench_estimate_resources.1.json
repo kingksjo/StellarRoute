@@ -435,7 +435,7 @@
                 "bytes": "0000000000000000000000000000000000000000000000000000000000000003"
               },
               {
-                "symbol": "get_quote"
+                "symbol": "estimate_resources"
               }
             ],
             "data": {
@@ -443,7 +443,7 @@
                 {
                   "i128": {
                     "hi": 0,
-                    "lo": 1000
+                    "lo": 1000000
                   }
                 },
                 {
@@ -473,6 +473,150 @@
                       },
                       "val": {
                         "vec": [
+                          {
+                            "map": [
+                              {
+                                "key": {
+                                  "symbol": "destination"
+                                },
+                                "val": {
+                                  "vec": [
+                                    {
+                                      "symbol": "Native"
+                                    }
+                                  ]
+                                }
+                              },
+                              {
+                                "key": {
+                                  "symbol": "pool"
+                                },
+                                "val": {
+                                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAITA4"
+                                }
+                              },
+                              {
+                                "key": {
+                                  "symbol": "pool_type"
+                                },
+                                "val": {
+                                  "vec": [
+                                    {
+                                      "symbol": "AmmConstProd"
+                                    }
+                                  ]
+                                }
+                              },
+                              {
+                                "key": {
+                                  "symbol": "source"
+                                },
+                                "val": {
+                                  "vec": [
+                                    {
+                                      "symbol": "Native"
+                                    }
+                                  ]
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "map": [
+                              {
+                                "key": {
+                                  "symbol": "destination"
+                                },
+                                "val": {
+                                  "vec": [
+                                    {
+                                      "symbol": "Native"
+                                    }
+                                  ]
+                                }
+                              },
+                              {
+                                "key": {
+                                  "symbol": "pool"
+                                },
+                                "val": {
+                                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAITA4"
+                                }
+                              },
+                              {
+                                "key": {
+                                  "symbol": "pool_type"
+                                },
+                                "val": {
+                                  "vec": [
+                                    {
+                                      "symbol": "AmmConstProd"
+                                    }
+                                  ]
+                                }
+                              },
+                              {
+                                "key": {
+                                  "symbol": "source"
+                                },
+                                "val": {
+                                  "vec": [
+                                    {
+                                      "symbol": "Native"
+                                    }
+                                  ]
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "map": [
+                              {
+                                "key": {
+                                  "symbol": "destination"
+                                },
+                                "val": {
+                                  "vec": [
+                                    {
+                                      "symbol": "Native"
+                                    }
+                                  ]
+                                }
+                              },
+                              {
+                                "key": {
+                                  "symbol": "pool"
+                                },
+                                "val": {
+                                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAITA4"
+                                }
+                              },
+                              {
+                                "key": {
+                                  "symbol": "pool_type"
+                                },
+                                "val": {
+                                  "vec": [
+                                    {
+                                      "symbol": "AmmConstProd"
+                                    }
+                                  ]
+                                }
+                              },
+                              {
+                                "key": {
+                                  "symbol": "source"
+                                },
+                                "val": {
+                                  "vec": [
+                                    {
+                                      "symbol": "Native"
+                                    }
+                                  ]
+                                }
+                              }
+                            ]
+                          },
                           {
                             "map": [
                               {
@@ -553,344 +697,53 @@
           "v0": {
             "topics": [
               {
-                "symbol": "fn_call"
-              },
-              {
-                "bytes": "0000000000000000000000000000000000000000000000000000000000000004"
-              },
-              {
-                "symbol": "adapter_quote"
-              }
-            ],
-            "data": {
-              "vec": [
-                {
-                  "vec": [
-                    {
-                      "symbol": "Native"
-                    }
-                  ]
-                },
-                {
-                  "vec": [
-                    {
-                      "symbol": "Native"
-                    }
-                  ]
-                },
-                {
-                  "i128": {
-                    "hi": 0,
-                    "lo": 1000
-                  }
-                }
-              ]
-            }
-          }
-        }
-      },
-      "failed_call": true
-    },
-    {
-      "event": {
-        "ext": "v0",
-        "contract_id": "0000000000000000000000000000000000000000000000000000000000000004",
-        "type_": "diagnostic",
-        "body": {
-          "v0": {
-            "topics": [
-              {
-                "symbol": "log"
-              }
-            ],
-            "data": {
-              "vec": [
-                {
-                  "string": "caught panic 'mock: pool unavailable' from contract function 'Symbol(obj#117)'"
-                },
-                {
-                  "vec": [
-                    {
-                      "symbol": "Native"
-                    }
-                  ]
-                },
-                {
-                  "vec": [
-                    {
-                      "symbol": "Native"
-                    }
-                  ]
-                },
-                {
-                  "i128": {
-                    "hi": 0,
-                    "lo": 1000
-                  }
-                }
-              ]
-            }
-          }
-        }
-      },
-      "failed_call": true
-    },
-    {
-      "event": {
-        "ext": "v0",
-        "contract_id": "0000000000000000000000000000000000000000000000000000000000000004",
-        "type_": "diagnostic",
-        "body": {
-          "v0": {
-            "topics": [
-              {
-                "symbol": "error"
-              },
-              {
-                "error": {
-                  "wasm_vm": "invalid_action"
-                }
-              }
-            ],
-            "data": {
-              "string": "caught error from function"
-            }
-          }
-        }
-      },
-      "failed_call": true
-    },
-    {
-      "event": {
-        "ext": "v0",
-        "contract_id": "0000000000000000000000000000000000000000000000000000000000000003",
-        "type_": "diagnostic",
-        "body": {
-          "v0": {
-            "topics": [
-              {
-                "symbol": "error"
-              },
-              {
-                "error": {
-                  "wasm_vm": "invalid_action"
-                }
-              }
-            ],
-            "data": {
-              "vec": [
-                {
-                  "string": "contract try_call failed"
-                },
-                {
-                  "symbol": "adapter_quote"
-                },
-                {
-                  "vec": [
-                    {
-                      "vec": [
-                        {
-                          "symbol": "Native"
-                        }
-                      ]
-                    },
-                    {
-                      "vec": [
-                        {
-                          "symbol": "Native"
-                        }
-                      ]
-                    },
-                    {
-                      "i128": {
-                        "hi": 0,
-                        "lo": 1000
-                      }
-                    }
-                  ]
-                }
-              ]
-            }
-          }
-        }
-      },
-      "failed_call": true
-    },
-    {
-      "event": {
-        "ext": "v0",
-        "contract_id": "0000000000000000000000000000000000000000000000000000000000000003",
-        "type_": "diagnostic",
-        "body": {
-          "v0": {
-            "topics": [
-              {
                 "symbol": "fn_return"
               },
               {
-                "symbol": "get_quote"
+                "symbol": "estimate_resources"
               }
             ],
             "data": {
-              "error": {
-                "contract": 31
-              }
-            }
-          }
-        }
-      },
-      "failed_call": true
-    },
-    {
-      "event": {
-        "ext": "v0",
-        "contract_id": "0000000000000000000000000000000000000000000000000000000000000003",
-        "type_": "diagnostic",
-        "body": {
-          "v0": {
-            "topics": [
-              {
-                "symbol": "error"
-              },
-              {
-                "error": {
-                  "contract": 31
-                }
-              }
-            ],
-            "data": {
-              "string": "escalating Ok(ScErrorType::Contract) frame-exit to Err"
-            }
-          }
-        }
-      },
-      "failed_call": true
-    },
-    {
-      "event": {
-        "ext": "v0",
-        "contract_id": null,
-        "type_": "diagnostic",
-        "body": {
-          "v0": {
-            "topics": [
-              {
-                "symbol": "error"
-              },
-              {
-                "error": {
-                  "contract": 31
-                }
-              }
-            ],
-            "data": {
-              "vec": [
+              "map": [
                 {
-                  "string": "contract try_call failed"
+                  "key": {
+                    "symbol": "estimated_cpu"
+                  },
+                  "val": {
+                    "u64": 28000000
+                  }
                 },
                 {
-                  "symbol": "get_quote"
+                  "key": {
+                    "symbol": "events"
+                  },
+                  "val": {
+                    "u32": 1
+                  }
                 },
                 {
-                  "vec": [
-                    {
-                      "i128": {
-                        "hi": 0,
-                        "lo": 1000
-                      }
-                    },
-                    {
-                      "map": [
-                        {
-                          "key": {
-                            "symbol": "estimated_output"
-                          },
-                          "val": {
-                            "i128": {
-                              "hi": 0,
-                              "lo": 990
-                            }
-                          }
-                        },
-                        {
-                          "key": {
-                            "symbol": "expires_at"
-                          },
-                          "val": {
-                            "u64": 99999
-                          }
-                        },
-                        {
-                          "key": {
-                            "symbol": "hops"
-                          },
-                          "val": {
-                            "vec": [
-                              {
-                                "map": [
-                                  {
-                                    "key": {
-                                      "symbol": "destination"
-                                    },
-                                    "val": {
-                                      "vec": [
-                                        {
-                                          "symbol": "Native"
-                                        }
-                                      ]
-                                    }
-                                  },
-                                  {
-                                    "key": {
-                                      "symbol": "pool"
-                                    },
-                                    "val": {
-                                      "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAITA4"
-                                    }
-                                  },
-                                  {
-                                    "key": {
-                                      "symbol": "pool_type"
-                                    },
-                                    "val": {
-                                      "vec": [
-                                        {
-                                          "symbol": "AmmConstProd"
-                                        }
-                                      ]
-                                    }
-                                  },
-                                  {
-                                    "key": {
-                                      "symbol": "source"
-                                    },
-                                    "val": {
-                                      "vec": [
-                                        {
-                                          "symbol": "Native"
-                                        }
-                                      ]
-                                    }
-                                  }
-                                ]
-                              }
-                            ]
-                          }
-                        },
-                        {
-                          "key": {
-                            "symbol": "min_output"
-                          },
-                          "val": {
-                            "i128": {
-                              "hi": 0,
-                              "lo": 900
-                            }
-                          }
-                        }
-                      ]
-                    }
-                  ]
+                  "key": {
+                    "symbol": "storage_reads"
+                  },
+                  "val": {
+                    "u32": 6
+                  }
+                },
+                {
+                  "key": {
+                    "symbol": "storage_writes"
+                  },
+                  "val": {
+                    "u32": 1
+                  }
+                },
+                {
+                  "key": {
+                    "symbol": "will_succeed"
+                  },
+                  "val": {
+                    "bool": true
+                  }
                 }
               ]
             }
