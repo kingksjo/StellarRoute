@@ -1,17 +1,24 @@
 use crate::errors::ContractError;
 use crate::events;
 use crate::storage::{
-    self, batch_check_pools, extend_instance_ttl, get_fee_rate, get_instance_config,
+    self, extend_instance_ttl, get_fee_rate,
     increment_nonce, transfer_asset, StorageKey,
 };
 use crate::types::{
     CommitmentData, ContractVersion, GovernanceConfig, MevConfig, Proposal, ProposalAction,
-    QuoteResult, Route, SwapParams, SwapResult, TokenCategory, TokenInfo,
+    QuoteResult, ResourceEstimate, Route, SwapParams, SwapResult, TokenCategory, TokenInfo,
 };
 use crate::{governance, tokens, upgrade};
 use soroban_sdk::{
     contract, contractimpl, symbol_short, vec, Address, Bytes, BytesN, Env, IntoVal, Symbol, Vec,
 };
+
+/// Maximum number of hops allowed in a route.
+const MAX_HOPS: u32 = 4;
+/// Estimated CPU instructions per hop for resource estimation.
+const BASE_CPU_PER_HOP: u64 = 5_000_000;
+/// Cross-contract invocation overhead per hop.
+const CCI_OVERHEAD: u64 = 2_000_000;
 
 #[contract]
 pub struct StellarRoute;

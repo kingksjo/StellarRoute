@@ -65,6 +65,16 @@ pub struct SwapResult {
     pub executed_at: u64,
 }
 
+#[contracttype]
+#[derive(Clone, Debug, PartialEq)]
+pub struct ResourceEstimate {
+    pub estimated_cpu: u64,
+    pub storage_reads: u32,
+    pub storage_writes: u32,
+    pub events: u32,
+    pub will_succeed: bool,
+}
+
 // --- MEV Protection Types ---
 
 #[contracttype]

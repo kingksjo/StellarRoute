@@ -108,6 +108,9 @@ fn bench_execute_swap_1_hop() {
         min_amount_out: 900_000,
         recipient: sender.clone(),
         deadline: 1000,
+        not_before: 0,
+        max_price_impact_bps: 10_000,
+        max_execution_spread_bps: 10_000,
     };
 
     // Benchmark execute_swap with 1 hop
@@ -134,6 +137,9 @@ fn bench_execute_swap_4_hops() {
         min_amount_out: 800_000,
         recipient: sender.clone(),
         deadline: 1000,
+        not_before: 0,
+        max_price_impact_bps: 10_000,
+        max_execution_spread_bps: 10_000,
     };
 
     // Benchmark execute_swap with 4 hops
@@ -180,6 +186,9 @@ fn stress_test_max_complexity() {
         min_amount_out: 1,
         recipient: sender.clone(),
         deadline: 10000,
+        not_before: 0,
+        max_price_impact_bps: 10_000,
+        max_execution_spread_bps: 10_000,
     };
 
     let result = client.try_execute_swap(&sender, &params);
