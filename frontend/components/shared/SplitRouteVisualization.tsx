@@ -81,7 +81,7 @@ function PathVisualization({
           const toCode = getAssetCode(step.to_asset);
 
           return (
-            <div key={index} className="flex items-center gap-2 flex-shrink-0">
+            <div key={index} className="flex items-center gap-2 shrink-0">
               {index === 0 && (
                 <div className="flex flex-col items-center">
                   <div className="w-8 h-8 rounded-full border-2 border-blue-500 flex items-center justify-center bg-background">

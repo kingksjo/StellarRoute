@@ -191,7 +191,7 @@ export function RouteVisualization({
   className,
 }: RouteVisualizationProps) {
   const [isExpanded, setIsExpanded] = useState(false);
-  const [isAnimated, _setIsAnimated] = useState(true);
+  const [isAnimated] = useState(true);
 
   // Loading state
   if (isLoading) {
@@ -277,7 +277,7 @@ export function RouteVisualization({
             <RouteNodeComponent node={node} />
             {index < edges.length && (
               <div className="flex flex-col items-center py-2">
-                <div className="h-8 w-[2px] bg-gradient-to-b from-transparent via-current to-transparent opacity-30" />
+                <div className="h-8 w-[2px] bg-linear-to-b from-transparent via-current to-transparent opacity-30" />
                 <Badge
                   variant="secondary"
                   className={cn(
@@ -291,7 +291,7 @@ export function RouteVisualization({
                     ? 'SDEX'
                     : edges[index].poolName || 'AMM'}
                 </Badge>
-                <div className="h-8 w-[2px] bg-gradient-to-b from-transparent via-current to-transparent opacity-30" />
+                <div className="h-8 w-[2px] bg-linear-to-b from-transparent via-current to-transparent opacity-30" />
               </div>
             )}
           </div>

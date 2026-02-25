@@ -9,32 +9,6 @@ export default function Home() {
         <div className="absolute bottom-0 right-0 w-[600px] h-[400px] bg-[#818cf8]/[0.03] rounded-full blur-[100px]" />
       </div>
 
-      {/* Header */}
-      <header className="relative z-10 flex items-center justify-between px-6 py-4 max-w-7xl mx-auto">
-        <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[#6366f1] to-[#818cf8] flex items-center justify-center">
-            <span className="text-sm font-bold text-white">S</span>
-          </div>
-          <span className="text-lg font-bold text-white">
-            Stellar<span className="text-[#818cf8]">Route</span>
-          </span>
-        </div>
-        <nav className="hidden sm:flex items-center gap-6">
-          <a href="#" className="text-sm text-white/60 hover:text-white transition-colors">
-            Swap
-          </a>
-          <a href="#" className="text-sm text-white/40 hover:text-white/70 transition-colors">
-            Pools
-          </a>
-          <a href="#" className="text-sm text-white/40 hover:text-white/70 transition-colors">
-            Portfolio
-          </a>
-        </nav>
-        <button className="px-4 py-2 rounded-xl bg-white/[0.06] border border-white/[0.08] text-sm font-medium text-white hover:bg-white/[0.1] transition-all">
-          Connect Wallet
-        </button>
-      </header>
-
       {/* Main content */}
       <div className="relative z-10 flex flex-col items-center justify-center px-4 pt-8 sm:pt-16 pb-16">
         {/* Hero text */}

@@ -105,7 +105,8 @@ export function TradeRouteExample() {
   const [error, setError] = useState<string>();
 
   // Example: Fetch quote from API
-  const _fetchQuote = async (
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const fetchQuote = async (
     baseAsset: string,
     quoteAsset: string,
     amount: string
